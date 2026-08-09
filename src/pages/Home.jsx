@@ -5,7 +5,7 @@ function Home() {
 
   return (
     <div>
-      <h1>랜딩페이지</h1>
+      <h1 className="text-title1">랜딩페이지</h1>
       <button
         type="button"
         className="cursor-pointer border border-gray-950"
