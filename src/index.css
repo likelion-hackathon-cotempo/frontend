@@ -98,6 +98,14 @@
     Color
     ========================= */
   --color-white: #ffffff;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f2f4f6;
+  --color-gray-200: #e6e8eb;
+  --color-gray-300: #c5ced7;
+  --color-gray-500: #99a8b7;
+  --color-gray-700: #5c6873;
+  --color-gray-900: #11161b;
 }
 
 @layer base {
