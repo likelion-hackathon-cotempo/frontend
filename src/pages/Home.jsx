@@ -4,7 +4,7 @@ function Home() {
   const navigate = useNavigate();
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <h1 className="text-title1">랜딩페이지</h1>
       <button
         type="button"
@@ -13,6 +13,11 @@ function Home() {
       >
         로그인
       </button>
+      <div className="bg-amber-700">
+        <div className="text-white">white</div>
+        <div className="text-gray-900">gray</div>
+        <div className="text-purple-900">purple</div>
+      </div>
     </div>
   );
 }
