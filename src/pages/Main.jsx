@@ -1,9 +1,7 @@
-function App() {
-  return (
-    <div>
-      <h1>메인페이지</h1>
-    </div>
-  );
+import HomeLayout from "../components/home/HomeLayout.jsx";
+
+function Main() {
+  return <HomeLayout />;
 }
 
-export default App;
+export default Main;
