@@ -28,7 +28,7 @@ function HomeLayout() {
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
 
   return (
-    <div className="flex min-h-screen flex-col gap-6 bg-gray-50 px-10 py-6">
+    <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <span className="text-title1 text-gray-900">logo</span>
       <div className="flex flex-1 items-stretch gap-6">
         <IconRail
@@ -44,7 +44,7 @@ function HomeLayout() {
           onSelectMenu={setActiveMenu}
           onLogout={() => {}}
         />
-        <main className="flex-1 rounded-2xl bg-white p-6">
+        <main className="flex-1">
           <CalendarCard />
         </main>
         <aside className="w-80 rounded-2xl bg-white p-6">
