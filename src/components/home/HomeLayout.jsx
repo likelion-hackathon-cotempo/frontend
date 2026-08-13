@@ -29,7 +29,7 @@ function HomeLayout() {
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-gray-50 px-10 py-6">
       <span className="text-title1 text-gray-900">logo</span>
-      <div className="flex flex-1 gap-6">
+      <div className="flex flex-1 items-stretch gap-6">
         <IconRail
           contexts={MOCK_CONTEXTS}
           activeId={activeId}
@@ -39,9 +39,9 @@ function HomeLayout() {
         <SubSideNav
           context={activeContext.type}
           teamName={activeContext.type === "me" ? "MY" : activeContext.teamName}
-          teamInitial={activeContext.type === "me" ? "M" : activeContext.initial}
           activeMenu={activeMenu}
           onSelectMenu={setActiveMenu}
+          onLogout={() => {}}
         />
         <main className="flex-1 rounded-2xl bg-white p-6">
           <p className="text-body2 text-gray-500">캘린더 영역 (다음 PR)</p>
