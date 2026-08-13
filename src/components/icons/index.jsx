@@ -103,3 +103,17 @@ export function TeamPlaceholderIcon({ className }) {
     </svg>
   );
 }
+
+export function ChevronIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M10 17L15 12L10 7"
+        stroke="currentColor"
+        strokeWidth="1.66667"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
