@@ -1,6 +1,7 @@
 import { useState } from "react";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
+import CalendarCard from "./calendar/CalendarCard.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -44,7 +45,7 @@ function HomeLayout() {
           onLogout={() => {}}
         />
         <main className="flex-1 rounded-2xl bg-white p-6">
-          <p className="text-body2 text-gray-500">캘린더 영역 (다음 PR)</p>
+          <CalendarCard />
         </main>
         <aside className="w-80 rounded-2xl bg-white p-6">
           <p className="text-body2 text-gray-500">사이드 패널 (다음 PR)</p>
