@@ -2,7 +2,7 @@ import { ProfileIcon, PlusIcon } from "../icons/index.jsx";
 
 function IconRail({ contexts, activeId, onSelect, onAddTeam }) {
   return (
-    <nav className="flex w-16 flex-col items-start gap-4">
+    <nav className="flex w-16 shrink-0 flex-col items-start gap-4">
       {contexts.map((ctx) => {
         const isActive = ctx.id === activeId;
         return (

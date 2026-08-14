@@ -16,7 +16,7 @@ function SubSideNav({ context, teamName, activeMenu, onSelectMenu, onLogout }) {
   const menuItems = MENU_CONFIG.filter((item) => !item.meOnly || context === "me");
 
   return (
-    <aside className="flex w-[241px] flex-col justify-between rounded-[28px] border-2 border-white bg-white/65 px-3 py-5 shadow-[0_0_16px_rgba(0,0,0,0.08)]">
+    <aside className="flex w-[241px] shrink-0 flex-col justify-between rounded-[28px] border-2 border-white bg-white/65 px-3 py-5 shadow-[0_0_16px_rgba(0,0,0,0.08)]">
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-200">

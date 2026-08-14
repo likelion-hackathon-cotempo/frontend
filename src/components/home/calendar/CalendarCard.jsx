@@ -1,6 +1,8 @@
 import { useState } from "react";
 import MonthNav from "./MonthNav.jsx";
 import MonthGrid from "./MonthGrid.jsx";
+import CreateEventButton from "./CreateEventButton.jsx";
+import UpcomingEventsRow from "./UpcomingEventsRow.jsx";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -29,11 +31,15 @@ function CalendarCard() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <MonthNav
-        monthLabel={`${MONTH_LABELS[month]} ${year}`}
-        onPrevMonth={goToPrevMonth}
-        onNextMonth={goToNextMonth}
-      />
+      <div className="flex items-center justify-between">
+        <MonthNav
+          monthLabel={`${MONTH_LABELS[month]} ${year}`}
+          onPrevMonth={goToPrevMonth}
+          onNextMonth={goToNextMonth}
+        />
+        <CreateEventButton onClick={() => {}} />
+      </div>
+      <UpcomingEventsRow />
       <MonthGrid
         year={year}
         month={month}
