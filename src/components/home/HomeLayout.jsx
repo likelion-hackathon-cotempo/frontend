@@ -44,10 +44,10 @@ function HomeLayout() {
           onSelectMenu={setActiveMenu}
           onLogout={() => {}}
         />
-        <main className="flex-1">
+        <main className="min-w-0 flex-1">
           <CalendarCard />
         </main>
-        <aside className="w-80 rounded-2xl bg-white p-6">
+        <aside className="w-80 shrink-0 rounded-2xl bg-white p-6">
           <p className="text-body2 text-gray-500">사이드 패널 (다음 PR)</p>
         </aside>
       </div>
