@@ -119,6 +119,8 @@
     rounded
     ========================= */
   --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-full: 9999px;
 }
 
 @layer base {
