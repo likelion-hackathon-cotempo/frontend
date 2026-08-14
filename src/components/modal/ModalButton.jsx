@@ -7,10 +7,10 @@ const SIZE_STYLES = {
 };
 
 const VARIANT_STYLES = {
-  off: "bg-purple-200 text-gray-900",
-  on: "bg-purple-900 text-white",
+  off: "cursor-not-allowed bg-purple-200 text-gray-900",
+  on: "cursor-pointer bg-purple-900 text-white",
   border:
-    "h-9 w-18.5 border border-gray-700 bg-gray-100 text-subtitle3 text-gray-700 px-2.5 py-2",
+    "h-9 w-18.5 cursor-pointer border border-gray-700 bg-gray-100 text-subtitle3 text-gray-700 px-2.5 py-2",
 };
 
 function ModalButton({

@@ -1,23 +1,29 @@
 // 모달에서 사용하는 시간 입력 컴포넌트
 // 시간은 12시간제로 12시까지 입력가능. 분은 0~59까지 입력가능. 입력값이 없으면 01으로 초기화
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function TimeInput({ defaultHour = "01", defaultMinute = "00", onChange }) {
+function TimeInput({
+  defaultHour = "01",
+  defaultMinute = "00",
+  onChange,
+}) {
   const [hour, setHour] = useState(defaultHour);
   const [minute, setMinute] = useState(defaultMinute);
+
+  useEffect(() => {
+    onChange?.({ hour, minute });
+  }, [hour, minute, onChange]);
 
   const handleChange = (unit, value) => {
     const nextValue = value.replace(/\D/g, "").slice(0, 2);
 
     if (unit === "hour") {
       setHour(nextValue);
-      onChange?.({ hour: nextValue, minute });
       return;
     }
 
     setMinute(nextValue);
-    onChange?.({ hour, minute: nextValue });
   };
 
   const formatValue = (unit, value) => {
@@ -34,13 +40,11 @@ function TimeInput({ defaultHour = "01", defaultMinute = "00", onChange }) {
     if (unit === "hour") {
       const nextHour = formatValue("hour", hour);
       setHour(nextHour);
-      onChange?.({ hour: nextHour, minute });
       return;
     }
 
     const nextMinute = formatValue("minute", minute);
     setMinute(nextMinute);
-    onChange?.({ hour, minute: nextMinute });
   };
 
   return (

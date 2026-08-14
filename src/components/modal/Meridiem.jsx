@@ -1,6 +1,6 @@
 // 모달에서 사용하는 am/pm 선택 컴포넌트
 // 현재 모달에서만 사용하므로 모달 폴더에 위치시킴
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const MERIDIEMS = ["AM", "PM"];
 
@@ -14,14 +14,16 @@ function Meridiem({
   const [internalValue, setInternalValue] = useState(defaultValue);
   const selectedValue = value ?? internalValue;
 
+  useEffect(() => {
+    onChange?.(selectedValue);
+  }, [selectedValue, onChange]);
+
   const handleSelect = (nextValue) => {
     if (disabled || nextValue === selectedValue) return;
 
     if (value === undefined) {
       setInternalValue(nextValue);
     }
-
-    onChange?.(nextValue);
   };
 
   return (
