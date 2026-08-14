@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AddPersonal from "../components/modal/AddPersonal.jsx";
-import JoinTeam from "../components/modal/JoinTeam.jsx";
+import AddPersonalModal from "../components/modal/AddPersonalModal.jsx";
+import JoinTeamModal from "../components/modal/JoinTeamModal.jsx";
+import JoinTeamRoleModal from "../components/modal/JoinTeamRoleModal.jsx";
 
 function Home() {
   const navigate = useNavigate();
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
+  const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isShareTeamModalOpen, setIsShareTeamModalOpen] = useState(false);
 
   return (
@@ -49,20 +51,29 @@ function Home() {
         팀 코드 공유
       </button>
 
-      <AddPersonal
+      <AddPersonalModal
         isOpen={isPersonalModalOpen}
         onClose={() => setIsPersonalModalOpen(false)}
         onSubmit={() => setIsPersonalModalOpen(false)}
       />
 
-      <JoinTeam
+      <JoinTeamModal
         isOpen={isJoinTeamModalOpen}
         variant="input"
         onClose={() => setIsJoinTeamModalOpen(false)}
-        onSubmit={() => setIsJoinTeamModalOpen(false)}
+        onSubmit={() => {
+          setIsJoinTeamModalOpen(false);
+          setIsJoinTeamRoleModalOpen(true);
+        }}
       />
 
-      <JoinTeam
+      <JoinTeamRoleModal
+        isOpen={isJoinTeamRoleModalOpen}
+        onClose={() => setIsJoinTeamRoleModalOpen(false)}
+        onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
+      />
+
+      <JoinTeamModal
         isOpen={isShareTeamModalOpen}
         variant="share"
         onClose={() => setIsShareTeamModalOpen(false)}
