@@ -1,6 +1,7 @@
 import { useState } from "react";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
+import CalendarCard from "./calendar/CalendarCard.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -27,7 +28,7 @@ function HomeLayout() {
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
 
   return (
-    <div className="flex min-h-screen flex-col gap-6 bg-gray-50 px-10 py-6">
+    <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <span className="text-title1 text-gray-900">logo</span>
       <div className="flex flex-1 items-stretch gap-6">
         <IconRail
@@ -43,8 +44,8 @@ function HomeLayout() {
           onSelectMenu={setActiveMenu}
           onLogout={() => {}}
         />
-        <main className="flex-1 rounded-2xl bg-white p-6">
-          <p className="text-body2 text-gray-500">캘린더 영역 (다음 PR)</p>
+        <main className="flex-1">
+          <CalendarCard />
         </main>
         <aside className="w-80 rounded-2xl bg-white p-6">
           <p className="text-body2 text-gray-500">사이드 패널 (다음 PR)</p>
