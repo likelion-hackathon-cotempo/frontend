@@ -44,6 +44,7 @@ function CodeCard({
   const handleFocus = (event) => {
     if (!readOnly) {
       setInteractionVariant("active");
+      event.currentTarget.select();
     }
 
     onFocus?.(event);
