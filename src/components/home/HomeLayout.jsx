@@ -2,6 +2,7 @@ import { useState } from "react";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
 import CalendarCard from "./calendar/CalendarCard.jsx";
+import SidePanel from "./side-panel/SidePanel.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -47,8 +48,8 @@ function HomeLayout() {
         <main className="min-w-0 flex-1">
           <CalendarCard />
         </main>
-        <aside className="w-80 shrink-0 rounded-2xl bg-white p-6">
-          <p className="text-body2 text-gray-500">사이드 패널 (다음 PR)</p>
+        <aside className="w-[325px] shrink-0 overflow-y-auto">
+          <SidePanel context={activeContext.type} />
         </aside>
       </div>
     </div>
