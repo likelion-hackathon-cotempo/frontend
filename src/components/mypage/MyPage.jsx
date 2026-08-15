@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { ProfileIcon } from "../icons/index.jsx";
+import chevronDown from "../../assets/icons/chevron-down.svg";
+import chevronUp from "../../assets/icons/chevron-up.svg";
+import checkIcon from "../../assets/icons/check.svg";
 
 const COUNTRIES = ["KR", "VN", "US"];
 
@@ -19,8 +22,8 @@ function MyPage() {
 
   return (
     <section className="flex w-[555px] max-w-full flex-col gap-8">
-      {/* 제목 */}
-      <h1 className="text-title1 text-gray-900">Profile</h1>
+      {/* 제목 - Display */}
+      <h1 className="text-display text-gray-900">Profile</h1>
 
       {/* 아바타 */}
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-purple-500 to-purple-900 text-white">
@@ -29,53 +32,45 @@ function MyPage() {
 
       {/* Name */}
       <label className="flex flex-col gap-2">
-        <span className="text-body3 text-gray-500">Name</span>
+        <span className="text-title2 text-gray-900">Name</span>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded-12 border border-gray-300 bg-white px-4 py-3 text-body1 text-gray-700 outline-none focus:border-purple-700"
+          className="rounded-16 border border-gray-300 bg-white px-4 py-3 text-subtitle2 text-gray-900 outline-none focus:border-purple-700"
         />
       </label>
 
       {/* Email (읽기 전용) */}
       <div className="flex items-center gap-4">
-        <span className="w-20 shrink-0 text-body3 text-gray-500">Email</span>
-        <span className="text-body1 text-gray-700">{email}</span>
+        <span className="w-20 shrink-0 text-title2 text-gray-900">Email</span>
+        <span className="text-subtitle2 text-gray-900">{email}</span>
       </div>
 
       {/* Country 드롭다운 */}
       <div className="relative flex items-center gap-4">
-        <span className="w-20 shrink-0 text-body3 text-gray-500">Country</span>
+        <span className="w-20 shrink-0 text-title2 text-gray-900">Country</span>
         <button
           type="button"
           onClick={() => setIsCountryOpen((prev) => !prev)}
-          className="flex items-center gap-1 text-body1 text-gray-700"
+          className="flex items-center gap-1 text-subtitle2 text-gray-900"
         >
           {country}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-               className={isCountryOpen ? "rotate-180" : ""}>
-            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          {/* 닫힘=아래화살표 / 열림=위화살표 */}
+          <img src={isCountryOpen ? chevronUp : chevronDown} alt="" className="h-4 w-4" />
         </button>
 
         {isCountryOpen && (
-          <div className="absolute left-24 top-8 z-10 flex w-44 flex-col gap-1 rounded-12 border border-gray-200 bg-white p-2 shadow-[0_0_16px_rgba(0,0,0,0.08)]">
+          <div className="absolute left-24 top-8 z-10 flex w-44 flex-col gap-1 rounded-16 border border-gray-200 bg-white p-2 shadow-[0_0_16px_rgba(0,0,0,0.08)]">
             {COUNTRIES.map((code) => (
               <button
                 key={code}
                 type="button"
                 onClick={() => setCountry(code)}
-                className="flex items-center justify-between rounded-8 px-3 py-2 text-body2 text-gray-700 hover:bg-purple-100"
+                className="flex items-center justify-between rounded-12 px-3 py-2 text-subtitle3 text-gray-700 hover:bg-purple-100"
               >
                 {code}
-                {country === code && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2"
-                          strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
+                {country === code && <img src={checkIcon} alt="선택됨" className="h-4 w-4" />}
               </button>
             ))}
             <div className="flex justify-end pt-1">
@@ -91,17 +86,17 @@ function MyPage() {
         )}
       </div>
 
-      {/* Timezone (글자수 카운터) */}
+      {/* Timezone - 50자 제한 + 포커스 테두리 */}
       <label className="flex flex-col gap-2">
-        <span className="text-body3 text-gray-500">Timezone</span>
-        <div className="rounded-12 border border-gray-300 bg-white px-4 py-3">
+        <span className="text-title2 text-gray-900">Timezone</span>
+        <div className="rounded-16 border border-gray-300 bg-white px-4 py-3 focus-within:border-purple-700">
           <textarea
             value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
+            onChange={(e) => setTimezone(e.target.value.slice(0, 50))}
             maxLength={50}
             rows={3}
             placeholder="Enter your time zone."
-            className="w-full resize-none bg-transparent text-body1 text-gray-700 outline-none placeholder:text-gray-500"
+            className="w-full resize-none bg-transparent text-subtitle2 text-gray-900 outline-none placeholder:text-gray-500"
           />
           <p className="text-right text-body3 text-gray-500">{timezone.length}/50</p>
         </div>
