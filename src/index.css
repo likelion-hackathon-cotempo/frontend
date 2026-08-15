@@ -98,6 +98,7 @@
     Color
     ========================= */
   --color-white: #ffffff;
+  --color-black: #000000;
 
   --color-gray-50: #f9fafb;
   --color-gray-100: #f2f4f6;
@@ -113,6 +114,14 @@
   --color-purple-600: #c8cbf5;
   --color-purple-700: #7c66bb;
   --color-purple-900: #4e2ea8;
+
+  /* =========================
+    rounded
+    ========================= */
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-28: 28px;
+  --radius-full: 9999px;
 }
 
 @layer base {
