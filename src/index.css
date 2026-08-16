@@ -126,7 +126,14 @@
     ========================= */
   --radius-8: 8px;
   --radius-12: 12px;
+  /* =========================
+    rounded
+    ========================= */
+  --radius-8: 8px;
+  --radius-12: 12px;
   --radius-16: 16px;
+  --radius-28: 28px;
+  --radius-full: 9999px;
   --radius-28: 28px;
   --radius-full: 9999px;
 }
