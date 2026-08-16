@@ -1,115 +1,44 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AddMilestoneSelfModal from "../components/modal/AddMilestoneSelfModal.jsx";
-import AddPersonalModal from "../components/modal/AddPersonalModal.jsx";
-import AddTeamModal from "../components/modal/AddTeamModal.jsx";
-import JoinTeamModal from "../components/modal/JoinTeamModal.jsx";
-import JoinTeamRoleModal from "../components/modal/JoinTeamRoleModal.jsx";
+import landingHero from "../assets/landing-hero.png";
 
 function Home() {
   const navigate = useNavigate();
-  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
-  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
-  const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
-  const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
-  const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
-  const [isShareTeamModalOpen, setIsShareTeamModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-title1">랜딩페이지</h1>
-      <button
-        type="button"
-        className="cursor-pointer border border-gray-950"
-        onClick={() => navigate("/login")}
-      >
-        로그인
-      </button>
-      <div className="bg-amber-700">
-        <div className="text-white">white</div>
-        <div className="text-gray-900">gray</div>
-        <div className="text-purple-900">purple</div>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-purple-200 px-10">
+      <div className="flex w-full max-w-[1120px] items-center justify-between gap-12">
+        <div className="flex flex-col gap-[26px]">
+          <div className="flex flex-col gap-3">
+            <h1 className="text-[40px] font-bold leading-[1.3] tracking-[-0.02em] text-gray-900">
+              Collaborate across borders, effortlessly
+            </h1>
+            <p className="text-title1 text-gray-700">
+              Manage different schedules and time zones in one place,
+              <br />
+              and find the perfect time for your team to work together.
+            </p>
+          </div>
+
+          <div className="flex gap-[10px]">
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="w-[187px] cursor-pointer rounded-12 bg-purple-900 py-3 text-display text-white transition-colors hover:bg-purple-700"
+            >
+              Log in
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="w-[187px] cursor-pointer rounded-12 border border-purple-600 bg-white py-3 text-display text-purple-900 transition-colors hover:bg-purple-900 hover:text-white"
+            >
+              Sign up
+            </button>
+          </div>
+        </div>
+
+        <img src={landingHero} alt="" className="w-[528px] max-w-full" />
       </div>
-
-      <button
-        type="button"
-        className="w-fit cursor-pointer rounded-12 bg-purple-900 px-4 py-2 text-subtitle3 text-white"
-        onClick={() => setIsPersonalModalOpen(true)}
-      >
-        개인 일정 추가
-      </button>
-
-      <button
-        type="button"
-        className="w-fit cursor-pointer rounded-12 bg-purple-900 px-4 py-2 text-subtitle3 text-white"
-        onClick={() => setIsMilestoneModalOpen(true)}
-      >
-        마일스톤 직접 추가
-      </button>
-
-      <button
-        type="button"
-        className="w-fit cursor-pointer rounded-12 bg-purple-900 px-4 py-2 text-subtitle3 text-white"
-        onClick={() => setIsAddTeamModalOpen(true)}
-      >
-        팀 생성
-      </button>
-
-      <button
-        type="button"
-        className="w-fit cursor-pointer rounded-12 bg-purple-900 px-4 py-2 text-subtitle3 text-white"
-        onClick={() => setIsJoinTeamModalOpen(true)}
-      >
-        팀 참여
-      </button>
-
-      <button
-        type="button"
-        className="w-fit cursor-pointer rounded-12 bg-purple-900 px-4 py-2 text-subtitle3 text-white"
-        onClick={() => setIsShareTeamModalOpen(true)}
-      >
-        팀 코드 공유
-      </button>
-
-      <AddPersonalModal
-        isOpen={isPersonalModalOpen}
-        onClose={() => setIsPersonalModalOpen(false)}
-        onSubmit={() => setIsPersonalModalOpen(false)}
-      />
-
-      <AddMilestoneSelfModal
-        isOpen={isMilestoneModalOpen}
-        onClose={() => setIsMilestoneModalOpen(false)}
-        onSubmit={() => setIsMilestoneModalOpen(false)}
-      />
-
-      <AddTeamModal
-        isOpen={isAddTeamModalOpen}
-        onClose={() => setIsAddTeamModalOpen(false)}
-        onSubmit={() => setIsAddTeamModalOpen(false)}
-      />
-
-      <JoinTeamModal
-        isOpen={isJoinTeamModalOpen}
-        variant="input"
-        onClose={() => setIsJoinTeamModalOpen(false)}
-        onSubmit={() => {
-          setIsJoinTeamModalOpen(false);
-          setIsJoinTeamRoleModalOpen(true);
-        }}
-      />
-
-      <JoinTeamRoleModal
-        isOpen={isJoinTeamRoleModalOpen}
-        onClose={() => setIsJoinTeamRoleModalOpen(false)}
-        onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
-      />
-
-      <JoinTeamModal
-        isOpen={isShareTeamModalOpen}
-        variant="share"
-        onClose={() => setIsShareTeamModalOpen(false)}
-      />
     </div>
   );
 }
