@@ -36,6 +36,8 @@ function AddTeamEventModal({ isOpen, members, onClose, onSubmit }) {
   const [endTime, setEndTime] = useState();
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
 
+  const isDateRangeInvalid = endDate < startDate;
+
   const isEndTimeEarlier =
     startTime &&
     endTime &&
@@ -45,7 +47,11 @@ function AddTeamEventModal({ isOpen, members, onClose, onSubmit }) {
     convertToMinutes(endTime, endMeridiem) <
       convertToMinutes(startTime, startMeridiem);
 
-  const canSubmit = eventName.trim().length > 0 && !isEndTimeEarlier;
+  const canSubmit =
+    eventName.trim().length > 0 &&
+    !isDateRangeInvalid &&
+    !isEndTimeEarlier &&
+    selectedMemberIds.length > 0;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -159,7 +165,13 @@ function AddTeamEventModal({ isOpen, members, onClose, onSubmit }) {
             </div>
           </div>
 
-          <ModalButton type="submit" size="small" variant={canSubmit ? "on" : "off"} disabled={!canSubmit}>
+          <ModalButton
+            type="submit"
+            size="small"
+            variant={canSubmit ? "on" : "off"}
+            disabled={!canSubmit}
+            className="w-24.5"
+          >
             Done
           </ModalButton>
         </form>
