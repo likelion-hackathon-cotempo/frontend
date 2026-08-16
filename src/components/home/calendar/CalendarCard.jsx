@@ -3,6 +3,7 @@ import MonthNav from "./MonthNav.jsx";
 import MonthGrid from "./MonthGrid.jsx";
 import CreateEventButton from "./CreateEventButton.jsx";
 import UpcomingEventsRow from "./UpcomingEventsRow.jsx";
+import AddTeamEventModal from "../../modal/AddTeamEventModal.jsx";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -18,9 +19,17 @@ const MOCK_EVENTS = {
   28: [{ color: "p", title: "Final Presentation" }],
 };
 
+const MOCK_TEAM_MEMBERS = [
+  { id: 1, initial: "J", name: "Jane" },
+  { id: 2, initial: "S", name: "Sally" },
+  { id: 3, initial: "A", name: "Alex" },
+  { id: 4, initial: "L", name: "Liam" },
+];
+
 function CalendarCard() {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -37,7 +46,7 @@ function CalendarCard() {
           onPrevMonth={goToPrevMonth}
           onNextMonth={goToNextMonth}
         />
-        <CreateEventButton onClick={() => {}} />
+        <CreateEventButton onClick={() => setIsCreateEventOpen(true)} />
       </div>
       <UpcomingEventsRow />
       <MonthGrid
@@ -45,6 +54,12 @@ function CalendarCard() {
         month={month}
         events={MOCK_EVENTS}
         todayDay={isCurrentMonth ? today.getDate() : null}
+      />
+      <AddTeamEventModal
+        isOpen={isCreateEventOpen}
+        members={MOCK_TEAM_MEMBERS}
+        onClose={() => setIsCreateEventOpen(false)}
+        onSubmit={() => setIsCreateEventOpen(false)}
       />
     </div>
   );
