@@ -15,8 +15,8 @@ function MemberChip({ initial, name, index, selected, onToggle }) {
     <button
       type="button"
       onClick={onToggle}
-      className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-2xl border px-2 py-1 ${
-        selected ? "border-purple-900" : "border-gray-300"
+      className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-16 border px-2 py-1 ${
+        selected ? "border-purple-900 bg-purple-100" : "border-gray-300"
       }`}
     >
       <span
