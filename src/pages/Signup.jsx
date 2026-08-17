@@ -107,6 +107,9 @@ const isValid = name && isEmailValid && password && country && timezone;
           {/* Timezone (최대 50 + 카운터) */}
           <label className="flex flex-col gap-2">
             <span className="text-title2 text-gray-700">Timezone</span>
+            <span className="text-body3 text-gray-500">
+              e.g. Asia/Seoul, Asia/Ho_Chi_Minh, America/Los_Angeles
+            </span>
             <div className="rounded-12 border border-gray-300 bg-white px-4 py-3 focus-within:border-purple-700">
               <textarea
                 value={timezone}
