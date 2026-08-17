@@ -1,25 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState} from "react";
 import { ProfileIcon } from "../icons/index.jsx";
 import chevronDown from "../../assets/icons/chevron-down.svg";
 import chevronUp from "../../assets/icons/chevron-up.svg";
 import checkIcon from "../../assets/icons/check.svg";
+import { getMe, updateMe } from "../../api/auth.js";
 
 const COUNTRIES = ["KR", "VN", "US"];
 
 function MyPage() {
-  const [name, setName] = useState("Jane");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [country, setCountry] = useState("KR");
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [timezone, setTimezone] = useState("");
 
-  // 로그인한 유저 정보 (나중에 전역상태/API 응답으로 교체)
-  const email = "Jane1234@gmail.com";
-
-  const handleSave = () => {
-    // TODO: API 연동 시 프로필 저장 요청
-    console.log({ name, country, timezone });
+  // 화면 뜰 때 내 정보 불러오기
+  useEffect(() => {
+    getMe()
+      .then((me) => {
+        setName(me.name ?? "");
+        setEmail(me.email ?? "");
+        setCountry(me.country ?? "KR");
+        setTimezone(me.timezone ?? "");
+      })
+      .catch((err) => console.error(err));
+  }, []);
+  const handleSave = async () => {
+    try {
+      await updateMe({ name, country, timezone });
+      alert("저장되었습니다");
+    } catch (err) {
+      console.error(err);
+      alert("저장에 실패했어요");
+    }
   };
-
+  
   return (
     <section className="flex w-[555px] max-w-full flex-col gap-8">
       {/* 제목 - Display */}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckIcon } from "../components/icons/index.jsx";
+import { signup } from "../api/auth"; 
 
 const COUNTRIES = ["KR", "VN", "US"];
 
@@ -18,12 +19,16 @@ const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // 다 채워지고 + 이메일 형식 맞아야 버튼 활성화
 const isValid = name && isEmailValid && password && country && timezone;
 
-  const handleSignup = (e) => {
+    const handleSignup = async (e) => {
     e.preventDefault();
     if (!isValid) return;
-    // TODO: API 연동 시 회원가입 요청 (name/email/password/country/timezone)
-    console.log({ name, email, password, country, timezone });
-    navigate("/login"); // 성공하면 로그인 페이지로
+    try {
+      await signup({ name, email, password, country, timezone });
+      navigate("/login"); // 성공하면 로그인 페이지로
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "회원가입에 실패했어요");
+    }
   };
 
   return (
