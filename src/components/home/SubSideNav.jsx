@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   CalendarIcon,
@@ -7,12 +8,13 @@ import {
 } from "../icons/index.jsx";
 
 const MENU_CONFIG = [
-  { id: "home", label: "Home", Icon: HomeIcon },
-  { id: "calendar", label: "Calendar", Icon: CalendarIcon },
-  { id: "mypage", label: "My Page", Icon: MyPageIcon, meOnly: true },
+  { id: "home", label: "Home", Icon: HomeIcon, to: "/main" },
+  { id: "calendar", label: "Calendar", Icon: CalendarIcon, to: "/main/calendar" },
+  { id: "mypage", label: "My Page", Icon: MyPageIcon, to: "/main/mypage", meOnly: true },
 ];
 
-function SubSideNav({ context, teamName, activeMenu, onSelectMenu, onLogout }) {
+function SubSideNav({ context, teamName, onLogout }) {
+  const { pathname } = useLocation();
   const menuItems = MENU_CONFIG.filter((item) => !item.meOnly || context === "me");
 
   return (
@@ -25,20 +27,19 @@ function SubSideNav({ context, teamName, activeMenu, onSelectMenu, onLogout }) {
           <span className="text-[18px] text-gray-900">{teamName}</span>
         </div>
         <ul className="flex flex-col gap-1">
-          {menuItems.map(({ id, label, Icon }) => {
-            const isActive = activeMenu === id;
+          {menuItems.map(({ id, label, Icon, to }) => {
+            const isActive = pathname === to;
             return (
               <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectMenu(id)}
+                <Link
+                  to={to}
                   className={`flex w-full items-center gap-2 rounded-full px-4 py-3 ${
                     isActive ? "bg-purple-200 text-purple-900" : "text-gray-700"
                   }`}
                 >
                   <Icon className="h-6 w-6" />
                   <span className={isActive ? "text-title3" : "text-subtitle3"}>{label}</span>
-                </button>
+                </Link>
               </li>
             );
           })}
