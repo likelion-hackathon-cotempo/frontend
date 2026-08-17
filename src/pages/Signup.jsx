@@ -12,8 +12,11 @@ function Signup() {
   const [country, setCountry] = useState("");
   const [timezone, setTimezone] = useState("");
 
-  // 5칸 다 채워지면 버튼 활성화
-  const isValid = name && email && password && country && timezone;
+ // 이메일 형식 체크 (@ 와 도메인이 있어야 통과)
+const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+// 다 채워지고 + 이메일 형식 맞아야 버튼 활성화
+const isValid = name && isEmailValid && password && country && timezone;
 
   const handleSignup = (e) => {
     e.preventDefault();
