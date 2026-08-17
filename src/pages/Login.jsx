@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../api/auth";
 
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    // TODO: API 연동 시 로그인 요청 → 성공하면 이동
-    console.log({ email, password });
+ const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    await login({ email, password });
     navigate("/main");
-  };
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "이메일/비밀번호를 확인해주세요");
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-purple-200 px-4">
