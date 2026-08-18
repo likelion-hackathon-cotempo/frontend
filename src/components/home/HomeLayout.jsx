@@ -9,6 +9,7 @@ import JoinTeamModal from "../modal/JoinTeamModal.jsx";
 import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
 import TeamActionMenu from "../modal/TeamActionMenu.jsx";
 import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
+import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -35,6 +36,7 @@ function HomeLayout({ page = "home" }) {
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
+  const [isMeetingSuggestionOpen, setIsMeetingSuggestionOpen] = useState(false);
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
@@ -91,6 +93,9 @@ function HomeLayout({ page = "home" }) {
                   setJoinTeamModalVariant("share");
                   setIsJoinTeamModalOpen(true);
                 }}
+                onConfirmMeetingSuggestion={() =>
+                  setIsMeetingSuggestionOpen(true)
+                }
               />
             </aside>
           </>
@@ -123,6 +128,11 @@ function HomeLayout({ page = "home" }) {
         isOpen={isAddMilestoneModalOpen}
         onClose={() => setIsAddMilestoneModalOpen(false)}
         onSubmit={() => setIsAddMilestoneModalOpen(false)}
+      />
+      <MeetingSuggestion
+        isOpen={isMeetingSuggestionOpen}
+        onClose={() => setIsMeetingSuggestionOpen(false)}
+        onSubmit={() => setIsMeetingSuggestionOpen(false)}
       />
     </div>
   );
