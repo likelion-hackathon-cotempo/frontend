@@ -20,12 +20,12 @@ const MOCK_MY_TEAMS = [
   { id: 2, initial: "S", name: "aaaaaaa", subtitle: "ddd · Global Project" },
 ];
 
-function SidePanel({ context }) {
+function SidePanel({ context, onAddMilestone }) {
   return (
     <div className="flex w-full flex-col gap-6">
       <MilestoneCard
         milestones={MOCK_MILESTONES}
-        onAddMilestone={() => {}}
+        onAddMilestone={onAddMilestone}
         onRecommendMilestones={() => {}}
       />
       {context === "team" ? (

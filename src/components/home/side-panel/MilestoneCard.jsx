@@ -11,7 +11,7 @@ function MilestoneCard({ milestones, onAddMilestone, onRecommendMilestones }) {
           type="button"
           onClick={onAddMilestone}
           aria-label="마일스톤 추가"
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-purple-900"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-purple-500 text-purple-900"
         >
           <PlusIcon className="h-[19px] w-[19px]" />
         </button>

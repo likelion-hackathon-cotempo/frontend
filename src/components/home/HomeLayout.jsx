@@ -8,6 +8,7 @@ import AddTeamModal from "../modal/AddTeamModal.jsx";
 import JoinTeamModal from "../modal/JoinTeamModal.jsx";
 import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
 import TeamActionMenu from "../modal/TeamActionMenu.jsx";
+import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -33,6 +34,7 @@ function HomeLayout({ page = "home" }) {
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
+  const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
@@ -82,7 +84,10 @@ function HomeLayout({ page = "home" }) {
               <CalendarCard />
             </main>
             <aside className="w-[325px] shrink-0 overflow-y-auto">
-              <SidePanel context={activeContext.type} />
+              <SidePanel
+                context={activeContext.type}
+                onAddMilestone={() => setIsAddMilestoneModalOpen(true)}
+              />
             </aside>
           </>
         )}
@@ -109,6 +114,11 @@ function HomeLayout({ page = "home" }) {
         isOpen={isJoinTeamRoleModalOpen}
         onClose={() => setIsJoinTeamRoleModalOpen(false)}
         onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
+      />
+      <AddMilestoneSelfModal
+        isOpen={isAddMilestoneModalOpen}
+        onClose={() => setIsAddMilestoneModalOpen(false)}
+        onSubmit={() => setIsAddMilestoneModalOpen(false)}
       />
     </div>
   );
