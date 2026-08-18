@@ -51,6 +51,19 @@ function eventMatchesFilter(event, filterId) {
   return event.category === filterId;
 }
 
+// 개인(MY) 캘린더에서는 마일스톤을 보여주지 않기로 팀에서 결정함
+// (같은 유형 프로젝트가 여러 팀에 있으면 마일스톤이 헷갈려서 팀별 화면에서만 노출)
+function excludeMilestonesForMe(context, eventsByDay) {
+  if (context !== "me") return eventsByDay;
+
+  const filtered = {};
+  Object.entries(eventsByDay).forEach(([day, events]) => {
+    const kept = events.filter((event) => event.category !== "milestone");
+    if (kept.length > 0) filtered[day] = kept;
+  });
+  return filtered;
+}
+
 function filterEvents(eventsByDay, activeFilters) {
   if (activeFilters.length === 0) return eventsByDay;
 
@@ -101,7 +114,7 @@ function CalendarPage({ context, teams }) {
       <MonthGrid
         year={year}
         month={month}
-        events={filterEvents(MOCK_EVENTS_BY_DAY, activeFilters)}
+        events={filterEvents(excludeMilestonesForMe(context, MOCK_EVENTS_BY_DAY), activeFilters)}
         todayDay={isCurrentMonth ? today.getDate() : null}
       />
       <AddTeamEventModal
