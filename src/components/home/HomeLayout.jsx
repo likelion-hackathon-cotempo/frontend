@@ -37,6 +37,8 @@ function HomeLayout({ page = "home" }) {
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
   const [isMeetingSuggestionOpen, setIsMeetingSuggestionOpen] = useState(false);
+  const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
+    useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
@@ -93,9 +95,10 @@ function HomeLayout({ page = "home" }) {
                   setJoinTeamModalVariant("share");
                   setIsJoinTeamModalOpen(true);
                 }}
-                onConfirmMeetingSuggestion={() =>
-                  setIsMeetingSuggestionOpen(true)
-                }
+                onConfirmMeetingSuggestion={() => {
+                  setMeetingSuggestionVariant("input");
+                  setIsMeetingSuggestionOpen(true);
+                }}
               />
             </aside>
           </>
@@ -131,8 +134,17 @@ function HomeLayout({ page = "home" }) {
       />
       <MeetingSuggestion
         isOpen={isMeetingSuggestionOpen}
-        onClose={() => setIsMeetingSuggestionOpen(false)}
-        onSubmit={() => setIsMeetingSuggestionOpen(false)}
+        variant={meetingSuggestionVariant}
+        onClose={() => {
+          setIsMeetingSuggestionOpen(false);
+          setMeetingSuggestionVariant("input");
+        }}
+        onNext={() => setMeetingSuggestionVariant("select")}
+        onBack={() => setMeetingSuggestionVariant("input")}
+        onSubmit={() => {
+          setIsMeetingSuggestionOpen(false);
+          setMeetingSuggestionVariant("input");
+        }}
       />
     </div>
   );
