@@ -5,6 +5,7 @@ import CreateEventButton from "./CreateEventButton.jsx";
 import UpcomingEventsRow from "./UpcomingEventsRow.jsx";
 import CalendarFilters from "./CalendarFilters.jsx";
 import AddTeamEventModal from "../../modal/AddTeamEventModal.jsx";
+import AddPersonalModal from "../../modal/AddPersonalModal.jsx";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -117,12 +118,20 @@ function CalendarPage({ context, teams }) {
         events={filterEvents(excludeMilestonesForMe(context, MOCK_EVENTS_BY_DAY), activeFilters)}
         todayDay={isCurrentMonth ? today.getDate() : null}
       />
-      <AddTeamEventModal
-        isOpen={isCreateEventOpen}
-        members={MOCK_TEAM_MEMBERS}
-        onClose={() => setIsCreateEventOpen(false)}
-        onSubmit={() => setIsCreateEventOpen(false)}
-      />
+      {context === "me" ? (
+        <AddPersonalModal
+          isOpen={isCreateEventOpen}
+          onClose={() => setIsCreateEventOpen(false)}
+          onSubmit={() => setIsCreateEventOpen(false)}
+        />
+      ) : (
+        <AddTeamEventModal
+          isOpen={isCreateEventOpen}
+          members={MOCK_TEAM_MEMBERS}
+          onClose={() => setIsCreateEventOpen(false)}
+          onSubmit={() => setIsCreateEventOpen(false)}
+        />
+      )}
     </div>
   );
 }
