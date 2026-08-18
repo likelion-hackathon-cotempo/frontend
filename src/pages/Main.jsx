@@ -3,7 +3,13 @@ import CalendarCard from "../components/home/calendar/CalendarCard.jsx";
 import SidePanel from "../components/home/side-panel/SidePanel.jsx";
 
 function Main() {
-  const { context } = useOutletContext();
+  const {
+    context,
+    onAddMilestone,
+    onAddMember,
+    onConfirmMeetingSuggestion,
+    onRecommendMilestones,
+  } = useOutletContext();
 
   return (
     <>
@@ -11,7 +17,13 @@ function Main() {
         <CalendarCard context={context} />
       </main>
       <aside className="w-[325px] shrink-0 overflow-y-auto">
-        <SidePanel context={context} />
+        <SidePanel
+          context={context}
+          onAddMilestone={onAddMilestone}
+          onAddMember={onAddMember}
+          onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
+          onRecommendMilestones={onRecommendMilestones}
+        />
       </aside>
     </>
   );

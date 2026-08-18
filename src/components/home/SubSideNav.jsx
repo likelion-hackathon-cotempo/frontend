@@ -9,13 +9,26 @@ import {
 
 const MENU_CONFIG = [
   { id: "home", label: "Home", Icon: HomeIcon, to: "/main" },
-  { id: "calendar", label: "Calendar", Icon: CalendarIcon, to: "/main/calendar" },
-  { id: "mypage", label: "My Page", Icon: MyPageIcon, to: "/main/mypage", meOnly: true },
+  {
+    id: "calendar",
+    label: "Calendar",
+    Icon: CalendarIcon,
+    to: "/main/calendar",
+  },
+  {
+    id: "mypage",
+    label: "My Page",
+    Icon: MyPageIcon,
+    to: "/main/mypage",
+    meOnly: true,
+  },
 ];
 
-function SubSideNav({ context, teamName, onLogout }) {
+function SubSideNav({ context, teamName, onLogout, isLoggingOut = false }) {
   const { pathname } = useLocation();
-  const menuItems = MENU_CONFIG.filter((item) => !item.meOnly || context === "me");
+  const menuItems = MENU_CONFIG.filter(
+    (item) => !item.meOnly || context === "me",
+  );
 
   return (
     <aside className="flex w-[241px] shrink-0 flex-col justify-between rounded-[28px] border-2 border-white bg-white/65 px-3 py-5 shadow-[0_0_16px_rgba(0,0,0,0.08)]">
@@ -33,12 +46,14 @@ function SubSideNav({ context, teamName, onLogout }) {
               <li key={id}>
                 <Link
                   to={to}
-                  className={`flex w-full items-center gap-2 rounded-full px-4 py-3 ${
+                  className={`flex w-full cursor-pointer items-center gap-2 rounded-full px-4 py-3 ${
                     isActive ? "bg-purple-200 text-purple-900" : "text-gray-700"
                   }`}
                 >
                   <Icon className="h-6 w-6" />
-                  <span className={isActive ? "text-title3" : "text-subtitle3"}>{label}</span>
+                  <span className={isActive ? "text-title3" : "text-subtitle3"}>
+                    {label}
+                  </span>
                 </Link>
               </li>
             );
@@ -48,10 +63,13 @@ function SubSideNav({ context, teamName, onLogout }) {
       <button
         type="button"
         onClick={onLogout}
-        className="flex items-center gap-2 rounded-xl px-4 py-3 text-gray-700"
+        disabled={isLoggingOut}
+        className="flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <LogoutIcon className="h-6 w-6" />
-        <span className="text-subtitle3">Log Out</span>
+        <span className="text-subtitle3">
+          {isLoggingOut ? "Log Out..." : "Log Out"}
+        </span>
       </button>
     </aside>
   );

@@ -1,22 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
+import BrandLogo from "../components/common/BrandLogo.jsx";
+import { useAuth } from "../auth/AuthContext.js";
 
 function Login() {
   const navigate = useNavigate();
+  const { setIsAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
- const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    await login({ email, password });
-    navigate("/main");
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "이메일/비밀번호를 확인해주세요");
-  }
-};
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await login({ email, password });
+      setIsAuthenticated(true);
+      navigate("/main", { replace: true });
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "이메일/비밀번호를 확인해주세요");
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-purple-200 px-4">
@@ -37,7 +41,7 @@ function Login() {
           <h1 className="text-[40px] font-bold leading-[1.3] tracking-[-0.02em] text-gray-900">
             Welcome to
           </h1>
-          <span className="text-title1 text-purple-900">cotempo</span>
+          <BrandLogo />
         </div>
 
         {/* E-mail - 라벨/글씨 gray-700 */}
