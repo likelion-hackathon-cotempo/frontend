@@ -30,12 +30,7 @@ function SidePanel({ context }) {
       />
       {context === "team" ? (
         <>
-          <MeetingSuggestionCard
-            day="Thursday"
-            time="10:00 AM"
-            timezone="KST"
-            onConfirm={() => {}}
-          />
+          <MeetingSuggestionCard onConfirm={() => {}} />
           <PeopleCard title="Member" items={MOCK_MEMBERS} showAddButton onAdd={() => {}} />
         </>
       ) : (
