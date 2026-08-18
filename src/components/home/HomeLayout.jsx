@@ -10,6 +10,7 @@ import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
+import { logout } from "../../api/auth.js";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -52,6 +53,7 @@ function HomeLayout() {
   const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
     useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
   const teams = MOCK_CONTEXTS.filter((ctx) => ctx.type === "team").map((ctx) => ({
@@ -64,6 +66,21 @@ function HomeLayout() {
 
     if (location.pathname === "/main/mypage" && contextId !== "me") {
       navigate("/main");
+    }
+  };
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error(error);
+      alert(error?.message || "로그아웃에 실패했습니다. 다시 시도해주세요.");
+      setIsLoggingOut(false);
     }
   };
 
@@ -96,7 +113,8 @@ function HomeLayout() {
         <SubSideNav
           context={activeContext.type}
           teamName={activeContext.type === "me" ? "MY" : activeContext.teamName}
-          onLogout={() => {}}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
         />
         <Outlet
           context={{
