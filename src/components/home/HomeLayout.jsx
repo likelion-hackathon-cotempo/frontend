@@ -6,6 +6,7 @@ import CalendarPage from "./calendar/CalendarPage.jsx";
 import SidePanel from "./side-panel/SidePanel.jsx";
 import AddTeamModal from "../modal/AddTeamModal.jsx";
 import JoinTeamModal from "../modal/JoinTeamModal.jsx";
+import TeamActionMenu from "../modal/TeamActionMenu.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -27,8 +28,10 @@ const MOCK_CONTEXTS = [
 
 function HomeLayout({ page = "home" }) {
   const [activeId, setActiveId] = useState("team-1");
+  const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
+  const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
   const teams = MOCK_CONTEXTS.filter((ctx) => ctx.type === "team").map((ctx) => ({
@@ -40,12 +43,28 @@ function HomeLayout({ page = "home" }) {
     <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <span className="text-title1 text-gray-900">logo</span>
       <div className="flex flex-1 items-stretch gap-6">
-        <IconRail
-          contexts={MOCK_CONTEXTS}
-          activeId={activeId}
-          onSelect={setActiveId}
-          onAddTeam={() => setIsAddTeamModalOpen(true)}
-        />
+        <div className="relative h-fit shrink-0">
+          <IconRail
+            contexts={MOCK_CONTEXTS}
+            activeId={activeId}
+            onSelect={setActiveId}
+            onAddTeam={() => setIsTeamActionMenuOpen((isOpen) => !isOpen)}
+          />
+          <div className="absolute left-0 top-full z-10 mt-3 w-max">
+            <TeamActionMenu
+              isOpen={isTeamActionMenuOpen}
+              onCreate={() => {
+                setIsTeamActionMenuOpen(false);
+                setIsAddTeamModalOpen(true);
+              }}
+              onJoin={() => {
+                setIsTeamActionMenuOpen(false);
+                setJoinTeamModalVariant("input");
+                setIsJoinTeamModalOpen(true);
+              }}
+            />
+          </div>
+        </div>
         <SubSideNav
           context={activeContext.type}
           teamName={activeContext.type === "me" ? "MY" : activeContext.teamName}
@@ -71,12 +90,13 @@ function HomeLayout({ page = "home" }) {
         onClose={() => setIsAddTeamModalOpen(false)}
         onSubmit={() => {
           setIsAddTeamModalOpen(false);
+          setJoinTeamModalVariant("share");
           setIsJoinTeamModalOpen(true);
         }}
       />
       <JoinTeamModal
         isOpen={isJoinTeamModalOpen}
-        variant="share"
+        variant={joinTeamModalVariant}
         onClose={() => setIsJoinTeamModalOpen(false)}
       />
     </div>
