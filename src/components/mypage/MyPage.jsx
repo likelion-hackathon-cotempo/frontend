@@ -81,7 +81,7 @@ function MyPage() {
                 onClick={() => setIsCountryOpen((prev) => !prev)}
                 aria-expanded={isCountryOpen}
                 aria-haspopup="listbox"
-                className="flex items-center gap-1 text-subtitle2 text-gray-900"
+                className="flex cursor-pointer items-center gap-1 text-subtitle2 text-gray-900"
               >
                 {country}
                 {/* 닫힘=아래화살표 / 열림=위화살표 */}
@@ -107,7 +107,7 @@ function MyPage() {
                         setCountry(code);
                         setIsCountryOpen(false);
                       }}
-                      className="flex items-center justify-between rounded-12 px-3 py-2 text-subtitle3 text-gray-700 hover:bg-purple-100"
+                      className="flex cursor-pointer items-center justify-between rounded-12 px-3 py-2 text-subtitle3 text-gray-700 hover:bg-purple-100"
                     >
                       {code}
                       {country === code && (
@@ -144,7 +144,7 @@ function MyPage() {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="rounded-12 bg-purple-900 px-6 py-2 text-subtitle3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer rounded-12 bg-purple-900 px-6 py-2 text-subtitle3 text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? "Saving..." : "Save"}
           </button>

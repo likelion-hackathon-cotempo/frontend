@@ -33,7 +33,7 @@ function SubSideNav({ context, teamName, onLogout }) {
               <li key={id}>
                 <Link
                   to={to}
-                  className={`flex w-full items-center gap-2 rounded-full px-4 py-3 ${
+                  className={`flex w-full cursor-pointer items-center gap-2 rounded-full px-4 py-3 ${
                     isActive ? "bg-purple-200 text-purple-900" : "text-gray-700"
                   }`}
                 >
@@ -48,7 +48,7 @@ function SubSideNav({ context, teamName, onLogout }) {
       <button
         type="button"
         onClick={onLogout}
-        className="flex items-center gap-2 rounded-xl px-4 py-3 text-gray-700"
+        className="flex cursor-pointer items-center gap-2 rounded-xl px-4 py-3 text-gray-700"
       >
         <LogoutIcon className="h-6 w-6" />
         <span className="text-subtitle3">Log Out</span>

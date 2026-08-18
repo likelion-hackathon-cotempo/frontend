@@ -11,7 +11,7 @@ function MonthNav({ monthLabel, onPrevMonth, onNextMonth }) {
           type="button"
           onClick={onPrevMonth}
           aria-label="이전 달"
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-purple-900"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-purple-500 text-purple-900"
         >
           <ChevronIcon className="h-6 w-6 rotate-180" />
         </button>
@@ -19,7 +19,7 @@ function MonthNav({ monthLabel, onPrevMonth, onNextMonth }) {
           type="button"
           onClick={onNextMonth}
           aria-label="다음 달"
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-purple-900"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-purple-500 text-purple-900"
         >
           <ChevronIcon className="h-6 w-6" />
         </button>

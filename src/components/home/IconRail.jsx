@@ -10,7 +10,7 @@ function IconRail({ contexts, activeId, onSelect, onAddTeam }) {
             key={ctx.id}
             type="button"
             onClick={() => onSelect(ctx.id)}
-            className="flex w-full flex-col items-center gap-2"
+            className="flex w-full cursor-pointer flex-col items-center gap-2"
           >
             <span
               className={`flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_0_16px_rgba(0,0,0,0.08)] ${
