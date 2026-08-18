@@ -9,6 +9,7 @@ import TeamActionMenu from "../modal/TeamActionMenu.jsx";
 import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
+import BrandLogo from "../common/BrandLogo.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -68,7 +69,7 @@ function HomeLayout() {
 
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
-      <span className="text-title1 text-gray-900">logo</span>
+      <BrandLogo />
       <div className="flex flex-1 items-stretch gap-6">
         <div className="relative h-fit shrink-0">
           <IconRail

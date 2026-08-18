@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
+import BrandLogo from "../components/common/BrandLogo.jsx";
 
 function Login() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ function Login() {
           <h1 className="text-[40px] font-bold leading-[1.3] tracking-[-0.02em] text-gray-900">
             Welcome to
           </h1>
-          <span className="text-title1 text-purple-900">cotempo</span>
+          <BrandLogo />
         </div>
 
         {/* E-mail - 라벨/글씨 gray-700 */}
