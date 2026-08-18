@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
 import CalendarCard from "./calendar/CalendarCard.jsx";
 import CalendarPage from "./calendar/CalendarPage.jsx";
 import SidePanel from "./side-panel/SidePanel.jsx";
+import MyPage from "../mypage/MyPage.jsx";
 import AddTeamModal from "../modal/AddTeamModal.jsx";
 import JoinTeamModal from "../modal/JoinTeamModal.jsx";
 import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
@@ -31,7 +33,13 @@ const MOCK_CONTEXTS = [
 ];
 
 function HomeLayout({ page = "home" }) {
-  const [activeId, setActiveId] = useState("team-1");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const requestedContextId = location.state?.activeId;
+  const initialActiveId = MOCK_CONTEXTS.some((context) => context.id === requestedContextId)
+    ? requestedContextId
+    : "team-1";
+  const [activeId, setActiveId] = useState(page === "mypage" ? "me" : initialActiveId);
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
@@ -52,6 +60,15 @@ function HomeLayout({ page = "home" }) {
     name: ctx.teamName,
   }));
 
+  const handleContextSelect = (contextId) => {
+    if (page === "mypage" && contextId !== "me") {
+      navigate("/main", { state: { activeId: contextId } });
+      return;
+    }
+
+    setActiveId(contextId);
+  };
+
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <span className="text-title1 text-gray-900">logo</span>
@@ -60,7 +77,7 @@ function HomeLayout({ page = "home" }) {
           <IconRail
             contexts={MOCK_CONTEXTS}
             activeId={activeId}
-            onSelect={setActiveId}
+            onSelect={handleContextSelect}
             onAddTeam={() => setIsTeamActionMenuOpen((isOpen) => !isOpen)}
           />
           <div className="absolute left-0 top-full z-10 mt-3 w-max">
@@ -86,6 +103,10 @@ function HomeLayout({ page = "home" }) {
         {page === "calendar" ? (
           <main className="min-w-0 flex-1">
             <CalendarPage context={activeContext.type} teams={teams} />
+          </main>
+        ) : page === "mypage" ? (
+          <main className="min-w-0 flex-1">
+            <MyPage />
           </main>
         ) : (
           <>
