@@ -20,7 +20,7 @@ const MOCK_MY_TEAMS = [
   { id: 2, initial: "S", name: "aaaaaaa", subtitle: "ddd · Global Project" },
 ];
 
-function SidePanel({ context, onAddMilestone }) {
+function SidePanel({ context, onAddMilestone, onAddMember }) {
   return (
     <div className="flex w-full flex-col gap-6">
       <MilestoneCard
@@ -36,7 +36,7 @@ function SidePanel({ context, onAddMilestone }) {
             timezone="KST"
             onConfirm={() => {}}
           />
-          <PeopleCard title="Member" items={MOCK_MEMBERS} showAddButton onAdd={() => {}} />
+          <PeopleCard title="Member" items={MOCK_MEMBERS} showAddButton onAdd={onAddMember} />
         </>
       ) : (
         <PeopleCard title="My Teams" items={MOCK_MY_TEAMS} showAddButton={false} />

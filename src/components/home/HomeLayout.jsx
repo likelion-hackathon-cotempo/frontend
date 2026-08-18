@@ -87,6 +87,10 @@ function HomeLayout({ page = "home" }) {
               <SidePanel
                 context={activeContext.type}
                 onAddMilestone={() => setIsAddMilestoneModalOpen(true)}
+                onAddMember={() => {
+                  setJoinTeamModalVariant("share");
+                  setIsJoinTeamModalOpen(true);
+                }}
               />
             </aside>
           </>
