@@ -25,13 +25,14 @@ function SidePanel({
   onAddMilestone,
   onAddMember,
   onConfirmMeetingSuggestion,
+  onRecommendMilestones,
 }) {
   return (
     <div className="flex w-full flex-col gap-6">
       <MilestoneCard
         milestones={MOCK_MILESTONES}
         onAddMilestone={onAddMilestone}
-        onRecommendMilestones={() => {}}
+        onRecommendMilestones={onRecommendMilestones}
       />
       {context === "team" ? (
         <>

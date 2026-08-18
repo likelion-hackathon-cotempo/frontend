@@ -10,6 +10,7 @@ import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
 import TeamActionMenu from "../modal/TeamActionMenu.jsx";
 import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
+import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -37,6 +38,10 @@ function HomeLayout({ page = "home" }) {
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
   const [isMeetingSuggestionOpen, setIsMeetingSuggestionOpen] = useState(false);
+  const [isMilestoneSuggestionOpen, setIsMilestoneSuggestionOpen] =
+    useState(false);
+  const [milestoneSuggestionVariant, setMilestoneSuggestionVariant] =
+    useState("input");
   const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
     useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
@@ -99,6 +104,10 @@ function HomeLayout({ page = "home" }) {
                   setMeetingSuggestionVariant("input");
                   setIsMeetingSuggestionOpen(true);
                 }}
+                onRecommendMilestones={() => {
+                  setMilestoneSuggestionVariant("input");
+                  setIsMilestoneSuggestionOpen(true);
+                }}
               />
             </aside>
           </>
@@ -144,6 +153,20 @@ function HomeLayout({ page = "home" }) {
         onSubmit={() => {
           setIsMeetingSuggestionOpen(false);
           setMeetingSuggestionVariant("input");
+        }}
+      />
+      <MilestoneSuggestion
+        isOpen={isMilestoneSuggestionOpen}
+        variant={milestoneSuggestionVariant}
+        onClose={() => {
+          setIsMilestoneSuggestionOpen(false);
+          setMilestoneSuggestionVariant("input");
+        }}
+        onNext={() => setMilestoneSuggestionVariant("select")}
+        onBack={() => setMilestoneSuggestionVariant("input")}
+        onSubmit={() => {
+          setIsMilestoneSuggestionOpen(false);
+          setMilestoneSuggestionVariant("input");
         }}
       />
     </div>
