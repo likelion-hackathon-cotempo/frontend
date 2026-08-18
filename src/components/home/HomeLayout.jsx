@@ -6,6 +6,7 @@ import CalendarPage from "./calendar/CalendarPage.jsx";
 import SidePanel from "./side-panel/SidePanel.jsx";
 import AddTeamModal from "../modal/AddTeamModal.jsx";
 import JoinTeamModal from "../modal/JoinTeamModal.jsx";
+import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
 import TeamActionMenu from "../modal/TeamActionMenu.jsx";
 
 const MOCK_CONTEXTS = [
@@ -31,6 +32,7 @@ function HomeLayout({ page = "home" }) {
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
+  const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
@@ -98,6 +100,15 @@ function HomeLayout({ page = "home" }) {
         isOpen={isJoinTeamModalOpen}
         variant={joinTeamModalVariant}
         onClose={() => setIsJoinTeamModalOpen(false)}
+        onSubmit={() => {
+          setIsJoinTeamModalOpen(false);
+          setIsJoinTeamRoleModalOpen(true);
+        }}
+      />
+      <JoinTeamRoleModal
+        isOpen={isJoinTeamRoleModalOpen}
+        onClose={() => setIsJoinTeamRoleModalOpen(false)}
+        onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
       />
     </div>
   );
