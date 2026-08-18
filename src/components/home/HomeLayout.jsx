@@ -4,6 +4,8 @@ import SubSideNav from "./SubSideNav.jsx";
 import CalendarCard from "./calendar/CalendarCard.jsx";
 import CalendarPage from "./calendar/CalendarPage.jsx";
 import SidePanel from "./side-panel/SidePanel.jsx";
+import AddTeamModal from "../modal/AddTeamModal.jsx";
+import JoinTeamModal from "../modal/JoinTeamModal.jsx";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -25,6 +27,8 @@ const MOCK_CONTEXTS = [
 
 function HomeLayout({ page = "home" }) {
   const [activeId, setActiveId] = useState("team-1");
+  const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
+  const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
   const teams = MOCK_CONTEXTS.filter((ctx) => ctx.type === "team").map((ctx) => ({
@@ -40,7 +44,7 @@ function HomeLayout({ page = "home" }) {
           contexts={MOCK_CONTEXTS}
           activeId={activeId}
           onSelect={setActiveId}
-          onAddTeam={() => {}}
+          onAddTeam={() => setIsAddTeamModalOpen(true)}
         />
         <SubSideNav
           context={activeContext.type}
@@ -62,6 +66,19 @@ function HomeLayout({ page = "home" }) {
           </>
         )}
       </div>
+      <AddTeamModal
+        isOpen={isAddTeamModalOpen}
+        onClose={() => setIsAddTeamModalOpen(false)}
+        onSubmit={() => {
+          setIsAddTeamModalOpen(false);
+          setIsJoinTeamModalOpen(true);
+        }}
+      />
+      <JoinTeamModal
+        isOpen={isJoinTeamModalOpen}
+        variant="share"
+        onClose={() => setIsJoinTeamModalOpen(false)}
+      />
     </div>
   );
 }

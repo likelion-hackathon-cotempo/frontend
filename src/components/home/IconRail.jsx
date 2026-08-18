@@ -35,7 +35,7 @@ function IconRail({ contexts, activeId, onSelect, onAddTeam }) {
         type="button"
         onClick={onAddTeam}
         aria-label="팀 추가"
-        className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-500 text-purple-900 drop-shadow-[0_0_8px_rgba(0,0,0,0.08)]"
+        className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-purple-500 text-purple-900 drop-shadow-[0_0_8px_rgba(0,0,0,0.08)]"
       >
         <PlusIcon className="h-[30px] w-[30px]" />
       </button>
