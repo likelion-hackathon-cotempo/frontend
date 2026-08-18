@@ -11,6 +11,7 @@ import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
+import { useAuth } from "../../auth/AuthContext.js";
 
 const MOCK_CONTEXTS = [
   { id: "me", type: "me", label: "MY" },
@@ -33,6 +34,7 @@ const MOCK_CONTEXTS = [
 function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setIsAuthenticated } = useAuth();
   const requestedContextId = location.state?.activeId;
   const initialActiveId = MOCK_CONTEXTS.some((context) => context.id === requestedContextId)
     ? requestedContextId
@@ -76,6 +78,7 @@ function HomeLayout() {
 
     try {
       await logout();
+      setIsAuthenticated(false);
       navigate("/login", { replace: true });
     } catch (error) {
       console.error(error);
