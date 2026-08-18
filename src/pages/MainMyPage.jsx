@@ -1,7 +1,11 @@
-import HomeLayout from "../components/home/HomeLayout.jsx";
+import MyPage from "../components/mypage/MyPage.jsx";
 
 function MainMyPage() {
-  return <HomeLayout page="mypage" />;
+  return (
+    <main className="min-w-0 flex-1">
+      <MyPage />
+    </main>
+  );
 }
 
 export default MainMyPage;

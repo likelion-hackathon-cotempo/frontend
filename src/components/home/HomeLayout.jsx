@@ -1,11 +1,7 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
-import CalendarCard from "./calendar/CalendarCard.jsx";
-import CalendarPage from "./calendar/CalendarPage.jsx";
-import SidePanel from "./side-panel/SidePanel.jsx";
-import MyPage from "../mypage/MyPage.jsx";
 import AddTeamModal from "../modal/AddTeamModal.jsx";
 import JoinTeamModal from "../modal/JoinTeamModal.jsx";
 import JoinTeamRoleModal from "../modal/JoinTeamRoleModal.jsx";
@@ -32,14 +28,16 @@ const MOCK_CONTEXTS = [
   },
 ];
 
-function HomeLayout({ page = "home" }) {
+function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const requestedContextId = location.state?.activeId;
   const initialActiveId = MOCK_CONTEXTS.some((context) => context.id === requestedContextId)
     ? requestedContextId
-    : "team-1";
-  const [activeId, setActiveId] = useState(page === "mypage" ? "me" : initialActiveId);
+    : location.pathname === "/main/mypage"
+      ? "me"
+      : "team-1";
+  const [activeId, setActiveId] = useState(initialActiveId);
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
@@ -61,12 +59,11 @@ function HomeLayout({ page = "home" }) {
   }));
 
   const handleContextSelect = (contextId) => {
-    if (page === "mypage" && contextId !== "me") {
-      navigate("/main", { state: { activeId: contextId } });
-      return;
-    }
-
     setActiveId(contextId);
+
+    if (location.pathname === "/main/mypage" && contextId !== "me") {
+      navigate("/main");
+    }
   };
 
   return (
@@ -100,39 +97,25 @@ function HomeLayout({ page = "home" }) {
           teamName={activeContext.type === "me" ? "MY" : activeContext.teamName}
           onLogout={() => {}}
         />
-        {page === "calendar" ? (
-          <main className="min-w-0 flex-1">
-            <CalendarPage context={activeContext.type} teams={teams} />
-          </main>
-        ) : page === "mypage" ? (
-          <main className="min-w-0 flex-1">
-            <MyPage />
-          </main>
-        ) : (
-          <>
-            <main className="min-w-0 flex-1">
-              <CalendarCard />
-            </main>
-            <aside className="w-[325px] shrink-0 overflow-y-auto">
-              <SidePanel
-                context={activeContext.type}
-                onAddMilestone={() => setIsAddMilestoneModalOpen(true)}
-                onAddMember={() => {
-                  setJoinTeamModalVariant("share");
-                  setIsJoinTeamModalOpen(true);
-                }}
-                onConfirmMeetingSuggestion={() => {
-                  setMeetingSuggestionVariant("input");
-                  setIsMeetingSuggestionOpen(true);
-                }}
-                onRecommendMilestones={() => {
-                  setMilestoneSuggestionVariant("input");
-                  setIsMilestoneSuggestionOpen(true);
-                }}
-              />
-            </aside>
-          </>
-        )}
+        <Outlet
+          context={{
+            context: activeContext.type,
+            teams,
+            onAddMilestone: () => setIsAddMilestoneModalOpen(true),
+            onAddMember: () => {
+              setJoinTeamModalVariant("share");
+              setIsJoinTeamModalOpen(true);
+            },
+            onConfirmMeetingSuggestion: () => {
+              setMeetingSuggestionVariant("input");
+              setIsMeetingSuggestionOpen(true);
+            },
+            onRecommendMilestones: () => {
+              setMilestoneSuggestionVariant("input");
+              setIsMilestoneSuggestionOpen(true);
+            },
+          }}
+        />
       </div>
       <AddTeamModal
         isOpen={isAddTeamModalOpen}
