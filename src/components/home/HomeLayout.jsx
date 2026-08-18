@@ -54,7 +54,7 @@ function HomeLayout({ page = "home" }) {
         ) : (
           <>
             <main className="min-w-0 flex-1">
-              <CalendarCard />
+              <CalendarCard context={activeContext.type} />
             </main>
             <aside className="w-[325px] shrink-0 overflow-y-auto">
               <SidePanel context={activeContext.type} />
