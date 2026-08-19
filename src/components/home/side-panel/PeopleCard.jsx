@@ -9,10 +9,27 @@ const AVATAR_GRADIENTS = [
   { from: "#ecdbff", to: "#6c11d4" },
 ];
 
-function PeopleCard({ title, items, showAddButton, onAdd }) {
+function PeopleCard({
+  title,
+  items,
+  isLoading = false,
+  emptyMessage = "",
+  showAddButton,
+  onAdd,
+}) {
   return (
     <SidePanelCard title={title}>
       <div className="flex w-full flex-col gap-2">
+        {isLoading && (
+          <p className="py-3 text-center text-body2 text-gray-500">
+            Loading...
+          </p>
+        )}
+        {!isLoading && items.length === 0 && emptyMessage && (
+          <p className="py-3 text-center text-body2 text-gray-500">
+            {emptyMessage}
+          </p>
+        )}
         {items.map((item, index) => {
           const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
           return (

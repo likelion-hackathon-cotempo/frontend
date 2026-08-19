@@ -8,25 +8,43 @@ const MOCK_MILESTONES = [
   { id: 3, dueLabel: "08. 28 · 20:00", title: "Final Presentation" },
 ];
 
-const MOCK_MEMBERS = [
-  { id: 1, initial: "J", name: "Jane", subtitle: "South Korea · UX Designer" },
-  { id: 2, initial: "S", name: "Sally", subtitle: "Vietnam · Product Manager" },
-  { id: 3, initial: "A", name: "Alex", subtitle: "United States · Frontend" },
-  { id: 4, initial: "L", name: "Liam", subtitle: "South Korea · Backend" },
-];
+const COUNTRY_LABELS = {
+  KR: "South Korea",
+  VN: "Vietnam",
+  US: "United States",
+};
 
-const MOCK_MY_TEAMS = [
-  { id: 1, initial: "J", name: "Culture Land", subtitle: "ddd · Hackathon" },
-  { id: 2, initial: "S", name: "aaaaaaa", subtitle: "ddd · Global Project" },
-];
+const getInitial = (name) =>
+  Array.from(name.trim())[0]?.toUpperCase() ?? "";
 
 function SidePanel({
   context,
+  teams,
+  teamDetail,
+  isTeamDetailLoading,
   onAddMilestone,
   onAddMember,
   onConfirmMeetingSuggestion,
   onRecommendMilestones,
 }) {
+  const members = (teamDetail?.members ?? []).map((member) => ({
+    id: member.memberId,
+    initial: getInitial(member.name),
+    name: member.name,
+    subtitle: [
+      COUNTRY_LABELS[member.country] ?? member.country,
+      member.role ?? member.position,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+  const myTeams = teams.map((team) => ({
+    id: team.id,
+    initial: getInitial(team.name),
+    name: team.name,
+    subtitle: team.myRole,
+  }));
+
   return (
     <div className="flex w-full flex-col gap-6">
       <MilestoneCard
@@ -42,10 +60,22 @@ function SidePanel({
             timezone="KST"
             onConfirm={onConfirmMeetingSuggestion}
           />
-          <PeopleCard title="Member" items={MOCK_MEMBERS} showAddButton onAdd={onAddMember} />
+          <PeopleCard
+            title="Member"
+            items={members}
+            isLoading={isTeamDetailLoading}
+            emptyMessage="No members yet."
+            showAddButton
+            onAdd={onAddMember}
+          />
         </>
       ) : (
-        <PeopleCard title="My Teams" items={MOCK_MY_TEAMS} showAddButton={false} />
+        <PeopleCard
+          title="My Teams"
+          items={myTeams}
+          emptyMessage="No teams yet."
+          showAddButton={false}
+        />
       )}
     </div>
   );

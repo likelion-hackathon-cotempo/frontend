@@ -11,7 +11,7 @@ import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
-import { createTeam, getMyTeams } from "../../api/team.js";
+import { createTeam, getMyTeams, getTeamDetail } from "../../api/team.js";
 import { useAuth } from "../../auth/AuthContext.js";
 
 const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
@@ -39,6 +39,8 @@ function HomeLayout() {
     requestedContextId: location.state?.activeId,
   }));
   const [teamContexts, setTeamContexts] = useState([]);
+  const [teamDetail, setTeamDetail] = useState(null);
+  const [isTeamDetailLoading, setIsTeamDetailLoading] = useState(false);
   const [activeId, setActiveId] = useState(
     initialSelection.isMyPage ? "me" : null,
   );
@@ -61,6 +63,10 @@ function HomeLayout() {
   const contexts = [MY_CONTEXT, ...teamContexts];
   const activeContext =
     contexts.find((context) => context.id === activeId) ?? MY_CONTEXT;
+  const activeTeamId =
+    activeContext.type === "team" ? activeContext.teamId : null;
+  const activeTeamDetail =
+    teamDetail?.teamId === activeTeamId ? teamDetail : null;
   const teams = teamContexts.map((context) => ({
     id: context.teamId,
     name: context.teamName,
@@ -115,6 +121,50 @@ function HomeLayout() {
 
     return () => controller.abort();
   }, [initialSelection]);
+
+  useEffect(() => {
+    if (activeTeamId === null) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    const loadTeamDetail = async () => {
+      setTeamDetail(null);
+      setIsTeamDetailLoading(true);
+
+      try {
+        const detail = await getTeamDetail(activeTeamId, {
+          signal: controller.signal,
+        });
+
+        setTeamDetail(detail);
+        setTeamContexts((currentContexts) =>
+          currentContexts.map((context) =>
+            context.teamId === detail.teamId
+              ? toTeamContext(detail)
+              : context,
+          ),
+        );
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        console.error(error);
+        alert(
+          error?.message ||
+            "팀 상세 정보를 불러오지 못했습니다. 다시 시도해주세요.",
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsTeamDetailLoading(false);
+        }
+      }
+    };
+
+    loadTeamDetail();
+
+    return () => controller.abort();
+  }, [activeTeamId]);
 
   const handleContextSelect = (contextId) => {
     setActiveId(contextId);
@@ -195,9 +245,17 @@ function HomeLayout() {
           context={{
             context: activeContext.type,
             teams,
+            activeTeamId,
+            teamDetail: activeTeamDetail,
+            isTeamDetailLoading,
             onAddMilestone: () => setIsAddMilestoneModalOpen(true),
             onAddMember: () => {
-              setCreatedTeamInviteCode("");
+              if (!activeTeamDetail?.inviteCode) {
+                alert("초대 코드를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
+              }
+
+              setCreatedTeamInviteCode(activeTeamDetail.inviteCode);
               setJoinTeamModalVariant("share");
               setIsJoinTeamModalOpen(true);
             },

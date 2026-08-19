@@ -5,6 +5,9 @@ import SidePanel from "../components/home/side-panel/SidePanel.jsx";
 function Main() {
   const {
     context,
+    teams,
+    teamDetail,
+    isTeamDetailLoading,
     onAddMilestone,
     onAddMember,
     onConfirmMeetingSuggestion,
@@ -19,6 +22,9 @@ function Main() {
       <aside className="w-[325px] shrink-0 overflow-y-auto">
         <SidePanel
           context={context}
+          teams={teams}
+          teamDetail={teamDetail}
+          isTeamDetailLoading={isTeamDetailLoading}
           onAddMilestone={onAddMilestone}
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
