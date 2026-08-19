@@ -7,6 +7,7 @@ import CalendarFilters from "./CalendarFilters.jsx";
 import AddTeamEventModal from "../../modal/AddTeamEventModal.jsx";
 import AddPersonalModal from "../../modal/AddPersonalModal.jsx";
 import useCalendarEvents from "./useCalendarEvents.js";
+import { createPersonalSchedule } from "../../../api/calendar.js";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -68,7 +69,7 @@ function CalendarPage({
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
-  const { events, eventsByDay, isLoading, error } = useCalendarEvents({
+  const { events, eventsByDay, isLoading, error, refresh } = useCalendarEvents({
     enabled: isContextReady,
     context,
     teamId: activeTeamId,
@@ -83,6 +84,11 @@ function CalendarPage({
 
   const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
+  const handleCreatePersonalSchedule = async (schedule) => {
+    await createPersonalSchedule(schedule);
+    setIsCreateEventOpen(false);
+    refresh();
+  };
 
   const filters = buildFilters(context, teams);
   const availableFilterIds = new Set(filters.map((filter) => filter.id));
@@ -128,7 +134,7 @@ function CalendarPage({
         <AddPersonalModal
           isOpen={isCreateEventOpen}
           onClose={() => setIsCreateEventOpen(false)}
-          onSubmit={() => setIsCreateEventOpen(false)}
+          onSubmit={handleCreatePersonalSchedule}
         />
       ) : (
         <AddTeamEventModal

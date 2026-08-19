@@ -20,3 +20,6 @@ export const getTeamCalendar = (teamId, year, month, config) =>
     `/api/v1/teams/${teamId}/calendar`,
     withCalendarParams(year, month, config),
   );
+
+export const createPersonalSchedule = (body) =>
+  client.post("/api/v1/schedules", body);

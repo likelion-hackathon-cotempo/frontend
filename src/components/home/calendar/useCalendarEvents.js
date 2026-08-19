@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPersonalCalendar, getTeamCalendar } from "../../../api/calendar.js";
 
 const pad = (value) => String(value).padStart(2, "0");
@@ -139,6 +139,11 @@ function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
   const [schedules, setSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  const refresh = useCallback(() => {
+    setRefreshToken((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled || (context === "team" && teamId == null)) {
@@ -177,7 +182,7 @@ function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
 
     loadCalendar();
     return () => controller.abort();
-  }, [context, enabled, month, teamId, year]);
+  }, [context, enabled, month, refreshToken, teamId, year]);
 
   const events = useMemo(
     () =>
@@ -194,10 +199,16 @@ function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
   );
 
   if (!enabled || (context === "team" && teamId == null)) {
-    return { events: [], eventsByDay: {}, isLoading: true, error: null };
+    return {
+      events: [],
+      eventsByDay: {},
+      isLoading: true,
+      error: null,
+      refresh,
+    };
   }
 
-  return { events, eventsByDay, isLoading, error };
+  return { events, eventsByDay, isLoading, error, refresh };
 }
 
 export default useCalendarEvents;
