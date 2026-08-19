@@ -334,6 +334,7 @@ function HomeLayout() {
       <MeetingSuggestion
         isOpen={isMeetingSuggestionOpen}
         variant={meetingSuggestionVariant}
+        teamId={activeTeamId}
         onClose={() => {
           setIsMeetingSuggestionOpen(false);
           setMeetingSuggestionVariant("input");

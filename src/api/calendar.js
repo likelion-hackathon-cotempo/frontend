@@ -29,3 +29,10 @@ export const updatePersonalSchedule = (personalScheduleId, body) =>
 
 export const deletePersonalSchedule = (personalScheduleId) =>
   client.delete(`/api/v1/schedules/${personalScheduleId}`);
+
+export const recommendMeetingTimes = (teamId, body, config) =>
+  client.post(
+    `/api/v1/teams/${teamId}/events/recommendations`,
+    body,
+    config,
+  );
