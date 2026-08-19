@@ -10,6 +10,7 @@ import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
+import useMilestones from "./side-panel/useMilestones.js";
 import { logout } from "../../api/auth.js";
 import {
   createTeam,
@@ -54,6 +55,7 @@ function HomeLayout() {
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [isMeetingSuggestionOpen, setIsMeetingSuggestionOpen] = useState(false);
   const [isMilestoneSuggestionOpen, setIsMilestoneSuggestionOpen] =
     useState(false);
@@ -78,6 +80,15 @@ function HomeLayout() {
     name: context.teamName,
     myRole: context.myRole,
   }));
+  const {
+    milestones,
+    isLoading: isMilestonesLoading,
+    error: milestoneError,
+    create: createMilestone,
+    update: updateMilestone,
+    remove: removeMilestone,
+    refresh: refreshMilestones,
+  } = useMilestones(activeTeamId);
 
   useEffect(() => {
     let isActive = true;
@@ -109,7 +120,7 @@ function HomeLayout() {
             return currentActiveId;
           }
 
-          return nextTeamContexts[0]?.id ?? "me";
+          return "me";
         });
       } catch (error) {
         if (!isActive) return;
@@ -176,6 +187,8 @@ function HomeLayout() {
 
   const handleContextSelect = (contextId) => {
     setActiveId(contextId);
+    setSelectedMilestone(null);
+    setIsAddMilestoneModalOpen(false);
 
     if (location.pathname === "/main/mypage" && contextId !== "me") {
       navigate("/main");
@@ -239,6 +252,35 @@ function HomeLayout() {
     }
   };
 
+  const closeMilestoneModal = () => {
+    setIsAddMilestoneModalOpen(false);
+    setSelectedMilestone(null);
+  };
+
+  const handleSubmitMilestone = async (milestone) => {
+    if (activeTeamId == null) {
+      throw new Error("팀 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+    }
+
+    if (selectedMilestone) {
+      await updateMilestone(selectedMilestone.milestoneId, {
+        ...milestone,
+        completed: true,
+      });
+    } else {
+      await createMilestone(milestone);
+    }
+
+    closeMilestoneModal();
+  };
+
+  const handleDeleteMilestone = async () => {
+    if (!selectedMilestone) return;
+
+    await removeMilestone(selectedMilestone.milestoneId);
+    closeMilestoneModal();
+  };
+
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <BrandLogo />
@@ -280,7 +322,17 @@ function HomeLayout() {
             activeTeamId,
             teamDetail: activeTeamDetail,
             isTeamDetailLoading,
-            onAddMilestone: () => setIsAddMilestoneModalOpen(true),
+            milestones,
+            isMilestonesLoading,
+            milestoneError,
+            onAddMilestone: () => {
+              setSelectedMilestone(null);
+              setIsAddMilestoneModalOpen(true);
+            },
+            onEditMilestone: (milestone) => {
+              setSelectedMilestone(milestone);
+              setIsAddMilestoneModalOpen(true);
+            },
             onAddMember: () => {
               if (!activeTeamDetail?.inviteCode) {
                 alert("초대 코드를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -327,9 +379,13 @@ function HomeLayout() {
         onSubmit={handleJoinTeam}
       />
       <AddMilestoneSelfModal
+        key={selectedMilestone?.milestoneId ?? "creation"}
         isOpen={isAddMilestoneModalOpen}
-        onClose={() => setIsAddMilestoneModalOpen(false)}
-        onSubmit={() => setIsAddMilestoneModalOpen(false)}
+        variant={selectedMilestone ? "revision" : "creation"}
+        initialMilestone={selectedMilestone}
+        onClose={closeMilestoneModal}
+        onSubmit={handleSubmitMilestone}
+        onDelete={handleDeleteMilestone}
       />
       <MeetingSuggestion
         isOpen={isMeetingSuggestionOpen}
@@ -357,6 +413,7 @@ function HomeLayout() {
         onNext={() => setMilestoneSuggestionVariant("select")}
         onBack={() => setMilestoneSuggestionVariant("input")}
         onSubmit={() => {
+          refreshMilestones();
           setIsMilestoneSuggestionOpen(false);
           setMilestoneSuggestionVariant("input");
         }}

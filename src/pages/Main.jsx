@@ -10,7 +10,11 @@ function Main() {
     teams,
     teamDetail,
     isTeamDetailLoading,
+    milestones,
+    isMilestonesLoading,
+    milestoneError,
     onAddMilestone,
+    onEditMilestone,
     onAddMember,
     onConfirmMeetingSuggestion,
     onRecommendMilestones,
@@ -32,7 +36,11 @@ function Main() {
           teams={teams}
           teamDetail={teamDetail}
           isTeamDetailLoading={isTeamDetailLoading}
+          milestones={milestones}
+          isMilestonesLoading={isMilestonesLoading}
+          milestoneError={milestoneError}
           onAddMilestone={onAddMilestone}
+          onEditMilestone={onEditMilestone}
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
           onRecommendMilestones={onRecommendMilestones}

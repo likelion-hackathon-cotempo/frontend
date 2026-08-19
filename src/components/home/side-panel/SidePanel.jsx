@@ -2,12 +2,6 @@ import MilestoneCard from "./MilestoneCard.jsx";
 import MeetingSuggestionCard from "./MeetingSuggestionCard.jsx";
 import PeopleCard from "./PeopleCard.jsx";
 
-const MOCK_MILESTONES = [
-  { id: 1, dueLabel: "08. 13 · 20:00", title: "Wireframe Complete" },
-  { id: 2, dueLabel: "08. 25 · 20:00", title: "QA Complete" },
-  { id: 3, dueLabel: "08. 28 · 20:00", title: "Final Presentation" },
-];
-
 const COUNTRY_LABELS = {
   KR: "South Korea",
   VN: "Vietnam",
@@ -22,7 +16,11 @@ function SidePanel({
   teams,
   teamDetail,
   isTeamDetailLoading,
+  milestones,
+  isMilestonesLoading,
+  milestoneError,
   onAddMilestone,
+  onEditMilestone,
   onAddMember,
   onConfirmMeetingSuggestion,
   onRecommendMilestones,
@@ -47,15 +45,16 @@ function SidePanel({
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <MilestoneCard
-        milestones={MOCK_MILESTONES}
-        onAddMilestone={onAddMilestone}
-        onRecommendMilestones={
-          context === "team" ? onRecommendMilestones : undefined
-        }
-      />
       {context === "team" ? (
         <>
+          <MilestoneCard
+            milestones={milestones}
+            isLoading={isMilestonesLoading}
+            error={milestoneError}
+            onAddMilestone={onAddMilestone}
+            onEditMilestone={onEditMilestone}
+            onRecommendMilestones={onRecommendMilestones}
+          />
           <MeetingSuggestionCard
             day="Thursday"
             time="10:00 AM"
