@@ -42,7 +42,7 @@ function MonthGrid({
           {week.map((day, dayIndex) => (
             <div
               key={dayIndex}
-              className="flex h-[132px] flex-1 flex-col gap-1.5 border border-[#cbd9e6] p-2"
+              className="flex min-h-[132px] flex-1 flex-col gap-1.5 border border-[#cbd9e6] p-2"
             >
               {day && (
                 <>
