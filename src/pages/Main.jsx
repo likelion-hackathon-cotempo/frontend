@@ -5,6 +5,7 @@ import SidePanel from "../components/home/side-panel/SidePanel.jsx";
 function Main() {
   const {
     context,
+    teamId,
     onAddMilestone,
     onAddMember,
     onConfirmMeetingSuggestion,
@@ -14,11 +15,12 @@ function Main() {
   return (
     <>
       <main className="min-w-0 flex-1">
-        <CalendarCard context={context} />
+        <CalendarCard context={context} teamId={teamId} />
       </main>
       <aside className="w-[325px] shrink-0 overflow-y-auto">
         <SidePanel
           context={context}
+          teamId={teamId}
           onAddMilestone={onAddMilestone}
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}

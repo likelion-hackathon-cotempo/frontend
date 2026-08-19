@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
@@ -12,36 +12,45 @@ import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
 import { useAuth } from "../../auth/AuthContext.js";
+import { getMyTeams } from "../../api/teams.js";
 
-const MOCK_CONTEXTS = [
-  { id: "me", type: "me", label: "MY" },
-  {
-    id: "team-1",
+const ME_CONTEXT = { id: "me", type: "me", label: "MY" };
+
+function buildTeamContext(team) {
+  const name = team.name ?? "";
+  return {
+    id: String(team.teamId),
     type: "team",
-    label: "Culture...",
-    initial: "C",
-    teamName: "Culture Land",
-  },
-  {
-    id: "team-2",
-    type: "team",
-    label: "Teamn...",
-    initial: "T",
-    teamName: "Teamname",
-  },
-];
+    label: name.length > 8 ? `${name.slice(0, 6)}...` : name,
+    initial: name.charAt(0).toUpperCase() || "?",
+    teamName: name,
+    teamId: team.teamId,
+  };
+}
 
 function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setIsAuthenticated } = useAuth();
+  const [teamContexts, setTeamContexts] = useState([]);
+  const contexts = [ME_CONTEXT, ...teamContexts];
   const requestedContextId = location.state?.activeId;
-  const initialActiveId = MOCK_CONTEXTS.some((context) => context.id === requestedContextId)
-    ? requestedContextId
-    : location.pathname === "/main/mypage"
-      ? "me"
-      : "team-1";
-  const [activeId, setActiveId] = useState(initialActiveId);
+  const [activeId, setActiveId] = useState(
+    location.pathname === "/main/mypage" ? "me" : requestedContextId || "me",
+  );
+
+  useEffect(() => {
+    getMyTeams()
+      .then((myTeams) => {
+        const nextTeamContexts = (myTeams ?? []).map(buildTeamContext);
+        setTeamContexts(nextTeamContexts);
+        if (requestedContextId && nextTeamContexts.some((c) => c.id === requestedContextId)) {
+          setActiveId(requestedContextId);
+        }
+      })
+      .catch((error) => console.error(error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
@@ -57,11 +66,8 @@ function HomeLayout() {
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
-  const teams = MOCK_CONTEXTS.filter((ctx) => ctx.type === "team").map((ctx) => ({
-    id: ctx.id,
-    name: ctx.teamName,
-  }));
+  const activeContext = contexts.find((ctx) => ctx.id === activeId) ?? ME_CONTEXT;
+  const teams = teamContexts.map((ctx) => ({ id: ctx.id, name: ctx.teamName }));
 
   const handleContextSelect = (contextId) => {
     setActiveId(contextId);
@@ -93,7 +99,7 @@ function HomeLayout() {
       <div className="flex flex-1 items-stretch gap-6">
         <div className="relative h-fit shrink-0">
           <IconRail
-            contexts={MOCK_CONTEXTS}
+            contexts={contexts}
             activeId={activeId}
             onSelect={handleContextSelect}
             onAddTeam={() => setIsTeamActionMenuOpen((isOpen) => !isOpen)}
@@ -122,6 +128,7 @@ function HomeLayout() {
         <Outlet
           context={{
             context: activeContext.type,
+            teamId: activeContext.teamId,
             teams,
             onAddMilestone: () => setIsAddMilestoneModalOpen(true),
             onAddMember: () => {

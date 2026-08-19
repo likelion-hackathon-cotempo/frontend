@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MonthNav from "./MonthNav.jsx";
 import MonthGrid from "./MonthGrid.jsx";
 import CreateEventButton from "./CreateEventButton.jsx";
@@ -6,6 +6,8 @@ import UpcomingEventsRow from "./UpcomingEventsRow.jsx";
 import CalendarFilters from "./CalendarFilters.jsx";
 import AddTeamEventModal from "../../modal/AddTeamEventModal.jsx";
 import AddPersonalModal from "../../modal/AddPersonalModal.jsx";
+import { getDashboard, getTeamCalendar } from "../../../api/calendar.js";
+import { mapEventsToGrid } from "./mapCalendarEvents.js";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -18,15 +20,6 @@ const MOCK_TEAM_MEMBERS = [
   { id: 3, initial: "A", name: "Alex" },
   { id: 4, initial: "L", name: "Liam" },
 ];
-
-const MOCK_EVENTS_BY_DAY = {
-  5: [{ color: "blue", title: "Interview", person: "Sally", category: "personal" }],
-  10: [{ color: "red", title: "Weekly Meeting", person: "ALL", category: "team", teamName: "Culture Land" }],
-  13: [{ color: "p", title: "Wireframe Complete", category: "milestone" }],
-  18: [{ color: "green", title: "Summer Vacation", person: "Sally", category: "personal" }],
-  25: [{ color: "p", title: "QA Complete", category: "milestone" }],
-  28: [{ color: "p", title: "Final Presentation", category: "milestone" }],
-};
 
 function buildFilters(context, teams) {
   if (context === "team") {
@@ -78,11 +71,12 @@ function filterEvents(eventsByDay, activeFilters) {
   return filtered;
 }
 
-function CalendarPage({ context, teams }) {
+function CalendarPage({ context, teamId, teams }) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [activeFilters, setActiveFilters] = useState([]);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [events, setEvents] = useState([]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -91,6 +85,32 @@ function CalendarPage({ context, teams }) {
   const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
+  const hasNoTeamSelected = context === "team" && !teamId;
+
+  useEffect(() => {
+    if (hasNoTeamSelected) return undefined;
+
+    let cancelled = false;
+    const request =
+      context === "team"
+        ? getTeamCalendar(teamId, year, month + 1)
+        : getDashboard(year, month + 1);
+
+    request
+      .then((result) => {
+        if (!cancelled) setEvents(result);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (!cancelled) setEvents([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context, teamId, year, month, hasNoTeamSelected]);
+
+  const eventsByDay = hasNoTeamSelected ? {} : mapEventsToGrid(events);
   const filters = buildFilters(context, teams);
   const toggleFilter = (filterId) => {
     setActiveFilters((current) =>
@@ -115,7 +135,7 @@ function CalendarPage({ context, teams }) {
       <MonthGrid
         year={year}
         month={month}
-        events={filterEvents(excludeMilestonesForMe(context, MOCK_EVENTS_BY_DAY), activeFilters)}
+        events={filterEvents(excludeMilestonesForMe(context, eventsByDay), activeFilters)}
         todayDay={isCurrentMonth ? today.getDate() : null}
       />
       {context === "me" ? (
