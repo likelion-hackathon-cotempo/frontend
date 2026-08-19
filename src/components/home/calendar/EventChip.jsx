@@ -7,13 +7,14 @@ const COLOR_STYLES = {
   p: { bg: "bg-[#faf5ff]", border: "border-[#e8d2ff]", text: "text-[#7e22ce]" },
 };
 
-function EventChip({ color, title, person, onClick }) {
+function EventChip({ color, title, person, isMultiDay = false, onClick }) {
   const style = COLOR_STYLES[color];
+  const widthClass = isMultiDay ? "w-full min-w-0" : "w-[77px]";
 
   if (color === "p") {
     return (
       <div
-        className={`flex w-[77px] items-center gap-1 rounded-[6px] border-[0.8px] px-2 py-1.5 ${style.bg} ${style.border}`}
+        className={`flex items-center gap-1 rounded-[6px] border-[0.8px] px-2 py-1.5 ${widthClass} ${style.bg} ${style.border}`}
       >
         <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#7e22ce]">
           <StarIcon className="h-[6px] w-[6px]" />
@@ -29,7 +30,7 @@ function EventChip({ color, title, person, onClick }) {
     <Component
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`flex w-[77px] flex-col items-start gap-0.5 rounded-[6px] border-[0.8px] px-2 py-1.5 ${style.bg} ${style.border} ${onClick ? "cursor-pointer text-left" : ""}`}
+      className={`flex flex-col items-start gap-0.5 rounded-[6px] border-[0.8px] px-2 py-1.5 ${widthClass} ${style.bg} ${style.border} ${onClick ? "cursor-pointer text-left" : ""}`}
     >
       <p className={`w-full truncate text-title5 ${style.text}`}>{title}</p>
       <span className="flex h-3 max-w-[64px] items-center justify-center rounded-[2px] bg-white px-1">

@@ -24,6 +24,82 @@ function getCalendarWeeks(year, month) {
   return weeks;
 }
 
+const EVENT_ROW_HEIGHT = 46;
+const EVENT_AREA_TOP = 38;
+const MIN_WEEK_HEIGHT = 132;
+
+function getEventIdentity(event) {
+  return (
+    event.key ??
+    [
+      event.category,
+      event.id,
+      event.title,
+      event.startDate?.getTime?.(),
+      event.endDate?.getTime?.(),
+    ].join(":")
+  );
+}
+
+function isMultiDayEvent(event, segment) {
+  if (segment.endColumn > segment.startColumn) return true;
+  if (!(event.startDate instanceof Date) || !(event.endDate instanceof Date)) {
+    return false;
+  }
+
+  return (
+    event.startDate.getFullYear() !== event.endDate.getFullYear() ||
+    event.startDate.getMonth() !== event.endDate.getMonth() ||
+    event.startDate.getDate() !== event.endDate.getDate()
+  );
+}
+
+function getWeekEventSegments(week, eventsByDay) {
+  const segmentsByEvent = new Map();
+
+  week.forEach((day, dayIndex) => {
+    if (!day) return;
+
+    (eventsByDay[day] ?? []).forEach((event) => {
+      const identity = getEventIdentity(event);
+      const current = segmentsByEvent.get(identity);
+
+      if (current) {
+        current.endColumn = dayIndex;
+        return;
+      }
+
+      segmentsByEvent.set(identity, {
+        identity,
+        event,
+        startColumn: dayIndex,
+        endColumn: dayIndex,
+      });
+    });
+  });
+
+  const segments = [...segmentsByEvent.values()].sort((left, right) => {
+    const startDifference = left.startColumn - right.startColumn;
+    if (startDifference !== 0) return startDifference;
+
+    return right.endColumn - left.endColumn;
+  });
+  const laneEndColumns = [];
+
+  segments.forEach((segment) => {
+    let lane = laneEndColumns.findIndex(
+      (endColumn) => endColumn < segment.startColumn,
+    );
+
+    if (lane === -1) lane = laneEndColumns.length;
+
+    laneEndColumns[lane] = segment.endColumn;
+    segment.lane = lane;
+  });
+
+  return { segments, laneCount: laneEndColumns.length };
+}
+
 function MonthGrid({
   year,
   month,
@@ -37,43 +113,68 @@ function MonthGrid({
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[28px] border border-[#cbd9e6]">
       <WeekdayHeader />
-      {weeks.map((week, weekIndex) => (
-        <div key={weekIndex} className="flex w-full">
-          {week.map((day, dayIndex) => (
-            <div
-              key={dayIndex}
-              className="flex min-h-[132px] flex-1 flex-col gap-1.5 border border-[#cbd9e6] p-2"
-            >
-              {day && (
-                <>
-                  <DateBadge day={day} isToday={day === todayDay} />
-                  {(events[day] ?? []).map((event) => {
-                    const { key, ...eventProps } = event;
-                    const handleEventClick =
-                      event.category === "personal"
-                        ? onPersonalEventClick
-                        : event.category === "team"
-                          ? onTeamEventClick
-                          : undefined;
+      {weeks.map((week, weekIndex) => {
+        const { segments, laneCount } = getWeekEventSegments(week, events);
+        const weekHeight = Math.max(
+          MIN_WEEK_HEIGHT,
+          EVENT_AREA_TOP + laneCount * EVENT_ROW_HEIGHT + 8,
+        );
 
-                    return (
-                      <EventChip
-                        key={key}
-                        {...eventProps}
-                        onClick={
-                          handleEventClick && event.id != null
-                            ? () => handleEventClick(event)
-                            : undefined
-                        }
-                      />
-                    );
-                  })}
-                </>
-              )}
+        return (
+          <div
+            key={weekIndex}
+            className="relative grid w-full grid-cols-7"
+            style={{ minHeight: weekHeight }}
+          >
+            {week.map((day, dayIndex) => (
+              <div
+                key={dayIndex}
+                className="border border-[#cbd9e6] p-2"
+              >
+                {day && (
+                  <DateBadge day={day} isToday={day === todayDay} />
+                )}
+              </div>
+            ))}
+
+            <div className="pointer-events-none absolute inset-0 grid grid-cols-7">
+              {segments.map((segment) => {
+                const { event } = segment;
+                const { key, ...eventProps } = event;
+                const handleEventClick =
+                  event.category === "personal"
+                    ? onPersonalEventClick
+                    : event.category === "team"
+                      ? onTeamEventClick
+                      : undefined;
+
+                return (
+                  <div
+                    key={`${key ?? segment.identity}:${weekIndex}`}
+                    className="pointer-events-auto z-10 mx-2 min-w-0 self-start"
+                    style={{
+                      gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`,
+                      gridRow: 1,
+                      marginTop:
+                        EVENT_AREA_TOP + segment.lane * EVENT_ROW_HEIGHT,
+                    }}
+                  >
+                    <EventChip
+                      {...eventProps}
+                      isMultiDay={isMultiDayEvent(event, segment)}
+                      onClick={
+                        handleEventClick && event.id != null
+                          ? () => handleEventClick(event)
+                          : undefined
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
