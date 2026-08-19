@@ -36,3 +36,11 @@ export const recommendMeetingTimes = (teamId, body, config) =>
     body,
     config,
   );
+
+export const recommendMilestones = (teamId, body) =>
+  client.post(`/api/v1/teams/${teamId}/milestones/recommendations`, body);
+
+export const createRecommendedMilestones = (teamId, milestones) =>
+  client.post(`/api/v1/teams/${teamId}/milestones/recommendations/bulk`, {
+    milestones,
+  });

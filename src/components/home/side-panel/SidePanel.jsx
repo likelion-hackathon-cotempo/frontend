@@ -50,7 +50,9 @@ function SidePanel({
       <MilestoneCard
         milestones={MOCK_MILESTONES}
         onAddMilestone={onAddMilestone}
-        onRecommendMilestones={onRecommendMilestones}
+        onRecommendMilestones={
+          context === "team" ? onRecommendMilestones : undefined
+        }
       />
       {context === "team" ? (
         <>

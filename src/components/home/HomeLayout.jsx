@@ -349,6 +349,7 @@ function HomeLayout() {
       <MilestoneSuggestion
         isOpen={isMilestoneSuggestionOpen}
         variant={milestoneSuggestionVariant}
+        teamId={activeTeamId}
         onClose={() => {
           setIsMilestoneSuggestionOpen(false);
           setMilestoneSuggestionVariant("input");

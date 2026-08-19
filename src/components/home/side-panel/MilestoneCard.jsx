@@ -30,7 +30,12 @@ function MilestoneCard({ milestones, onAddMilestone, onRecommendMilestones }) {
             <CheckIcon className="h-6 w-6 text-gray-900" />
           </div>
         ))}
-        <ActionButton label="Recommend Milestones" onClick={onRecommendMilestones} />
+        {onRecommendMilestones ? (
+          <ActionButton
+            label="Recommend Milestones"
+            onClick={onRecommendMilestones}
+          />
+        ) : null}
       </div>
     </SidePanelCard>
   );
