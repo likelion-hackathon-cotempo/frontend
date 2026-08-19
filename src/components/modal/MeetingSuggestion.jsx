@@ -4,49 +4,13 @@ import DateInput from "./DateInput.jsx";
 import ModalButton from "./ModalButton.jsx";
 import RadioButton from "./RadioButton.jsx";
 import SuggestionCard from "./SuggestionCard.jsx";
+import { recommendMeetingTimes } from "../../api/calendar.js";
 
 const MEETING_DURATIONS = [
   { label: "30 min", value: 30 },
   { label: "1 hour", value: 60 },
   { label: "1 hr 30 min", value: 90 },
   { label: "2 hr", value: 120 },
-];
-
-const MOCK_SUGGESTIONS = [
-  {
-    id: 1,
-    title: "Thursday, Aug 13 · 10:00 AM (KST)",
-    description: "Everyone is available at this time.",
-  },
-  {
-    id: 2,
-    title: "Friday, Aug 16 · 14:00 AM (KST)",
-    description:
-      "Everyone is available,But the time is less preferred by Sally. Everyone is available,But the time is less preferred by Sally.",
-  },
-  {
-    id: 3,
-    title: "Friday, Aug 14 · 11:00 AM (KST)",
-    description:
-      "4 of 5 members are available.\nAlex is unavailable at this time.",
-  },
-  {
-    id: 4,
-    title: "Monday, Aug 17 · 09:30 AM (KST)",
-    description: "Everyone is available at this time.",
-  },
-  {
-    id: 5,
-    title: "Tuesday, Aug 18 · 15:00 PM (KST)",
-    description:
-      "4 of 5 members are available.\nJane is unavailable at this time.",
-  },
-  {
-    id: 6,
-    title: "Wednesday, Aug 19 · 13:00 PM (KST)",
-    description:
-      "Everyone is available,\nBut the time is less preferred by Liam.",
-  },
 ];
 
 const getCurrentDate = () => {
@@ -58,6 +22,51 @@ const getCurrentDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const toUtcDateTime = (date, isEndOfDay = false) => {
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Date(
+    year,
+    month - 1,
+    day,
+    isEndOfDay ? 23 : 0,
+    isEndOfDay ? 59 : 0,
+    isEndOfDay ? 59 : 0,
+    isEndOfDay ? 999 : 0,
+  ).toISOString();
+};
+
+const meetingTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Seoul",
+  weekday: "long",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const formatMeetingTime = (dateTime) => {
+  const date = new Date(dateTime);
+  if (Number.isNaN(date.getTime())) return dateTime;
+
+  const parts = Object.fromEntries(
+    meetingTimeFormatter
+      .formatToParts(date)
+      .filter(({ type }) => type !== "literal")
+      .map(({ type, value }) => [type, value]),
+  );
+
+  return `${parts.weekday}, ${parts.month} ${parts.day} · ${parts.hour}:${parts.minute} ${parts.dayPeriod} (KST)`;
+};
+
+const toSuggestion = (suggestion, index) => ({
+  ...suggestion,
+  id: `${suggestion.startDateTime}-${suggestion.endDateTime}-${index}`,
+  title: formatMeetingTime(suggestion.startDateTime),
+  description: suggestion.description ?? "",
+});
+
 function MeetingSuggestion({
   isOpen,
   variant = "input",
@@ -68,11 +77,15 @@ function MeetingSuggestion({
   initialStartDate = getCurrentDate(),
   initialEndDate = initialStartDate,
   initialDuration = 30,
+  teamId,
 }) {
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
   const [duration, setDuration] = useState(initialDuration);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState();
+  const [suggestions, setSuggestions] = useState([]);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   const isInputVariant = variant === "input";
   const isDateRangeInvalid = !startDate || !endDate || endDate < startDate;
@@ -90,15 +103,43 @@ function MeetingSuggestion({
 
   if (!isOpen || !["input", "select"].includes(variant)) return null;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (isInputVariant) {
-      if (!isDateRangeInvalid) onNext?.({ startDate, endDate, duration });
+      if (isDateRangeInvalid || teamId == null || isRequesting) return;
+
+      setIsRequesting(true);
+      setRequestError("");
+      setSuggestions([]);
+      setSelectedSuggestionId();
+
+      try {
+        const result = await recommendMeetingTimes(teamId, {
+          startDateTime: toUtcDateTime(startDate),
+          endDateTime: toUtcDateTime(endDate, true),
+          durationMinutes: duration,
+        });
+        const nextSuggestions = Array.isArray(result)
+          ? result.map(toSuggestion)
+          : [];
+
+        setSuggestions(nextSuggestions);
+        onNext?.({ startDate, endDate, duration });
+      } catch (error) {
+        console.error(error);
+        setRequestError(
+          error?.message ||
+            "회의 시간을 추천받지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
+      } finally {
+        setIsRequesting(false);
+      }
+
       return;
     }
 
-    const suggestion = MOCK_SUGGESTIONS.find(
+    const suggestion = suggestions.find(
       ({ id }) => id === selectedSuggestionId,
     );
 
@@ -114,7 +155,7 @@ function MeetingSuggestion({
         if (event.target === event.currentTarget) onClose?.();
       }}
     >
-      <section className="h-[542px] rounded-28 bg-white p-6">
+      <section className="h-135.5 rounded-28 bg-white p-6">
         <form
           onSubmit={handleSubmit}
           className="flex h-full w-100 flex-col items-end gap-7"
@@ -170,20 +211,32 @@ function MeetingSuggestion({
                       ))}
                     </div>
                   </div>
+
+                  {requestError ? (
+                    <p role="alert" className="text-body3 text-red-600">
+                      {requestError}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto">
-                  {MOCK_SUGGESTIONS.map((suggestion) => (
-                    <SuggestionCard
-                      key={suggestion.id}
-                      title={suggestion.title}
-                      description={suggestion.description}
-                      variant={
-                        selectedSuggestionId === suggestion.id ? "on" : "off"
-                      }
-                      onClick={() => setSelectedSuggestionId(suggestion.id)}
-                    />
-                  ))}
+                  {suggestions.length > 0 ? (
+                    suggestions.map((suggestion) => (
+                      <SuggestionCard
+                        key={suggestion.id}
+                        title={suggestion.title}
+                        description={suggestion.description}
+                        variant={
+                          selectedSuggestionId === suggestion.id ? "on" : "off"
+                        }
+                        onClick={() => setSelectedSuggestionId(suggestion.id)}
+                      />
+                    ))
+                  ) : (
+                    <p className="py-8 text-center text-body2 text-gray-700">
+                      선택한 기간에 추천할 수 있는 회의 시간이 없습니다.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -192,11 +245,11 @@ function MeetingSuggestion({
           {isInputVariant ? (
             <ModalButton
               type="submit"
-              variant={isDateRangeInvalid ? "off" : "on"}
-              disabled={isDateRangeInvalid}
+              variant={isDateRangeInvalid || isRequesting ? "off" : "on"}
+              disabled={isDateRangeInvalid || isRequesting}
               className="w-24.5"
             >
-              Next
+              {isRequesting ? "Loading..." : "Next"}
             </ModalButton>
           ) : (
             <div className="flex gap-2.5">

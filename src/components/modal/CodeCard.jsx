@@ -24,19 +24,14 @@ function CodeCard({
   readOnly = false,
   ...inputProps
 }) {
-  const [internalValue, setInternalValue] = useState(() =>
-    normalizeCodeCharacter(children ?? ""),
-  );
   const [interactionVariant, setInteractionVariant] = useState(null);
-  const currentValue = internalValue;
+  const currentValue = normalizeCodeCharacter(children ?? "");
   const currentVariant = interactionVariant ?? variant;
   const variantStyle = VARIANT_STYLES[currentVariant] ?? VARIANT_STYLES.empty;
 
   const handleChange = (event) => {
     const nextValue = normalizeCodeCharacter(event.currentTarget.value);
     event.currentTarget.value = nextValue;
-
-    setInternalValue(nextValue);
 
     onChange?.(event);
   };
@@ -52,7 +47,7 @@ function CodeCard({
 
   const handleBlur = (event) => {
     if (!readOnly) {
-      setInteractionVariant(event.target.value ? "filled" : "empty");
+      setInteractionVariant(null);
     }
 
     onBlur?.(event);

@@ -5,7 +5,9 @@ import Textfield from "./Textfield.jsx";
 
 function AddTeamModal({ isOpen, onClose, onSubmit }) {
   const [teamName, setTeamName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isTeamNameEntered = teamName.trim().length > 0;
+  const canSubmit = isTeamNameEntered && !isSubmitting;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -28,12 +30,21 @@ function AddTeamModal({ isOpen, onClose, onSubmit }) {
     onClose?.();
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!isTeamNameEntered) return;
+    if (!canSubmit) return;
 
-    onSubmit?.(teamName.trim());
-    setTeamName("");
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit?.(teamName.trim());
+      setTeamName("");
+    } catch (error) {
+      console.error(error);
+      alert(error?.message || "팀 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,17 +69,18 @@ function AddTeamModal({ isOpen, onClose, onSubmit }) {
               value={teamName}
               onChange={(event) => setTeamName(event.target.value)}
               placeholder="Team name"
+              disabled={isSubmitting}
               className="w-full"
             />
           </div>
 
           <ModalButton
             type="submit"
-            variant={isTeamNameEntered ? "on" : "off"}
-            disabled={!isTeamNameEntered}
+            variant={canSubmit ? "on" : "off"}
+            disabled={!canSubmit}
             className="w-24.5"
           >
-            Next
+            {isSubmitting ? "Creating..." : "Next"}
           </ModalButton>
         </form>
       </section>

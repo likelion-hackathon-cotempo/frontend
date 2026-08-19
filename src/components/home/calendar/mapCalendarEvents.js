@@ -16,6 +16,11 @@ const COLOR_BY_TYPE = {
   ACADEMIC: "green",
 };
 
+// MY 캘린더에서는 소속 팀을 특정하기 어려운 마일스톤을 노출하지 않는다.
+export function isEventVisibleForContext(context, event) {
+  return context !== "me" || event.category !== "milestone";
+}
+
 function eventDay(event) {
   const raw = event.startDate || event.startDateTime || event.dueDateTime;
   if (!raw) return null;
@@ -32,7 +37,11 @@ export function mapEventsToGrid(events) {
     if (!day) return;
 
     const chip = {
-      id: event.id,
+      id:
+        event.personalScheduleId ??
+        event.teamEventId ??
+        event.eventId ??
+        event.id,
       color: COLOR_BY_TYPE[event.type] ?? "blue",
       title: event.title,
       person: event.memberName ?? "",

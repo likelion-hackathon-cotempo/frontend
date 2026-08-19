@@ -10,52 +10,52 @@ import AddMilestoneSelfModal from "../modal/AddMilestoneSelfModal.jsx";
 import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
+import useMilestones from "./side-panel/useMilestones.js";
 import { logout } from "../../api/auth.js";
+import {
+  createTeam,
+  getMyTeams,
+  getTeamDetail,
+  joinTeam,
+} from "../../api/teams.js";
 import { useAuth } from "../../auth/AuthContext.js";
-import { getMyTeams } from "../../api/teams.js";
 
-const ME_CONTEXT = { id: "me", type: "me", label: "MY" };
+const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
 
-function buildTeamContext(team) {
-  const name = team.name ?? "";
+const toTeamContext = ({ teamId, name, myRole }) => {
+  const teamName = String(name ?? "").trim();
+
   return {
-    id: String(team.teamId),
+    id: `team-${teamId}`,
+    teamId,
     type: "team",
-    label: name.length > 8 ? `${name.slice(0, 6)}...` : name,
-    initial: name.charAt(0).toUpperCase() || "?",
-    teamName: name,
-    teamId: team.teamId,
+    label: teamName.length > 8 ? `${teamName.slice(0, 6)}...` : teamName,
+    initial: Array.from(teamName)[0]?.toUpperCase() ?? "?",
+    teamName,
+    myRole,
   };
-}
+};
 
 function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setIsAuthenticated } = useAuth();
+  const [initialSelection] = useState(() => ({
+    isMyPage: location.pathname === "/main/mypage",
+    requestedContextId: location.state?.activeId,
+  }));
   const [teamContexts, setTeamContexts] = useState([]);
-  const contexts = [ME_CONTEXT, ...teamContexts];
-  const requestedContextId = location.state?.activeId;
+  const [teamDetail, setTeamDetail] = useState(null);
+  const [isTeamDetailLoading, setIsTeamDetailLoading] = useState(false);
   const [activeId, setActiveId] = useState(
-    location.pathname === "/main/mypage" ? "me" : requestedContextId || "me",
+    initialSelection.isMyPage ? "me" : null,
   );
-
-  useEffect(() => {
-    getMyTeams()
-      .then((myTeams) => {
-        const nextTeamContexts = (myTeams ?? []).map(buildTeamContext);
-        setTeamContexts(nextTeamContexts);
-        if (requestedContextId && nextTeamContexts.some((c) => c.id === requestedContextId)) {
-          setActiveId(requestedContextId);
-        }
-      })
-      .catch((error) => console.error(error));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
   const [isJoinTeamRoleModalOpen, setIsJoinTeamRoleModalOpen] = useState(false);
   const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [isMeetingSuggestionOpen, setIsMeetingSuggestionOpen] = useState(false);
   const [isMilestoneSuggestionOpen, setIsMilestoneSuggestionOpen] =
     useState(false);
@@ -64,13 +64,131 @@ function HomeLayout() {
   const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
     useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
+  const [joinInviteCode, setJoinInviteCode] = useState("");
+  const [createdTeamInviteCode, setCreatedTeamInviteCode] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const activeContext = contexts.find((ctx) => ctx.id === activeId) ?? ME_CONTEXT;
-  const teams = teamContexts.map((ctx) => ({ id: ctx.id, name: ctx.teamName }));
+  const contexts = [MY_CONTEXT, ...teamContexts];
+  const activeContext =
+    contexts.find((context) => context.id === activeId) ?? MY_CONTEXT;
+  const activeTeamId =
+    activeContext.type === "team" ? activeContext.teamId : null;
+  const activeTeamDetail =
+    teamDetail?.teamId === activeTeamId ? teamDetail : null;
+  const teams = teamContexts.map((context) => ({
+    id: context.teamId,
+    name: context.teamName,
+    myRole: context.myRole,
+  }));
+  const {
+    milestones,
+    isLoading: isMilestonesLoading,
+    error: milestoneError,
+    create: createMilestone,
+    update: updateMilestone,
+    remove: removeMilestone,
+    refresh: refreshMilestones,
+  } = useMilestones(activeTeamId);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMyTeams = async () => {
+      try {
+        const participatingTeams = await getMyTeams();
+        if (!isActive) return;
+
+        const nextTeamContexts = participatingTeams.map(toTeamContext);
+
+        setTeamContexts(nextTeamContexts);
+        setActiveId((currentActiveId) => {
+          if (initialSelection.isMyPage) return "me";
+
+          const requestedContext = nextTeamContexts.find(
+            (context) =>
+              context.id === String(initialSelection.requestedContextId) ||
+              String(context.teamId) ===
+                String(initialSelection.requestedContextId),
+          );
+
+          if (requestedContext) return requestedContext.id;
+          if (
+            nextTeamContexts.some(
+              (context) => context.id === currentActiveId,
+            )
+          ) {
+            return currentActiveId;
+          }
+
+          return "me";
+        });
+      } catch (error) {
+        if (!isActive) return;
+
+        console.error(error);
+        alert(
+          error?.message ||
+            "참여 중인 팀 목록을 불러오지 못했습니다. 다시 시도해주세요.",
+        );
+        setActiveId((currentActiveId) => currentActiveId ?? "me");
+      }
+    };
+
+    loadMyTeams();
+
+    return () => {
+      isActive = false;
+    };
+  }, [initialSelection]);
+
+  useEffect(() => {
+    if (activeTeamId === null) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    const loadTeamDetail = async () => {
+      setTeamDetail(null);
+      setIsTeamDetailLoading(true);
+
+      try {
+        const detail = await getTeamDetail(activeTeamId, {
+          signal: controller.signal,
+        });
+
+        setTeamDetail(detail);
+        setTeamContexts((currentContexts) =>
+          currentContexts.map((context) =>
+            context.teamId === detail.teamId
+              ? toTeamContext(detail)
+              : context,
+          ),
+        );
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        console.error(error);
+        alert(
+          error?.message ||
+            "팀 상세 정보를 불러오지 못했습니다. 다시 시도해주세요.",
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsTeamDetailLoading(false);
+        }
+      }
+    };
+
+    loadTeamDetail();
+
+    return () => controller.abort();
+  }, [activeTeamId]);
 
   const handleContextSelect = (contextId) => {
     setActiveId(contextId);
+    setSelectedMilestone(null);
+    setIsAddMilestoneModalOpen(false);
 
     if (location.pathname === "/main/mypage" && contextId !== "me") {
       navigate("/main");
@@ -90,6 +208,87 @@ function HomeLayout() {
       console.error(error);
       alert(error?.message || "로그아웃에 실패했습니다. 다시 시도해주세요.");
       setIsLoggingOut(false);
+    }
+  };
+
+  const handleCreateTeam = async (name) => {
+    const createdTeam = await createTeam(name);
+    const createdTeamContext = toTeamContext({
+      ...createdTeam,
+      myRole: "OWNER",
+    });
+
+    setTeamContexts((currentContexts) => [
+      ...currentContexts.filter(
+        (context) => context.teamId !== createdTeamContext.teamId,
+      ),
+      createdTeamContext,
+    ]);
+    setCreatedTeamInviteCode(createdTeam.inviteCode);
+    setIsAddTeamModalOpen(false);
+    setJoinTeamModalVariant("share");
+    setIsJoinTeamModalOpen(true);
+  };
+
+  const handleJoinTeam = async (position) => {
+    const joinedTeam = await joinTeam(joinInviteCode, position);
+    const joinedTeamContext = toTeamContext({
+      ...joinedTeam,
+      myRole: joinedTeam.myRole ?? "MEMBER",
+    });
+
+    setTeamContexts((currentContexts) => [
+      ...currentContexts.filter(
+        (context) => context.teamId !== joinedTeamContext.teamId,
+      ),
+      joinedTeamContext,
+    ]);
+    setActiveId(joinedTeamContext.id);
+    setJoinInviteCode("");
+    setIsJoinTeamRoleModalOpen(false);
+
+    if (location.pathname === "/main/mypage") {
+      navigate("/main");
+    }
+  };
+
+  const closeMilestoneModal = () => {
+    setIsAddMilestoneModalOpen(false);
+    setSelectedMilestone(null);
+  };
+
+  const handleSubmitMilestone = async (milestone) => {
+    if (activeTeamId == null) {
+      throw new Error("팀 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+    }
+
+    if (selectedMilestone) {
+      await updateMilestone(selectedMilestone.milestoneId, milestone);
+    } else {
+      await createMilestone(milestone);
+    }
+
+    closeMilestoneModal();
+  };
+
+  const handleDeleteMilestone = async () => {
+    if (!selectedMilestone) return;
+
+    await removeMilestone(selectedMilestone.milestoneId);
+    closeMilestoneModal();
+  };
+
+  const handleToggleMilestone = async (milestone) => {
+    try {
+      await updateMilestone(milestone.milestoneId, {
+        completed: !milestone.completed,
+      });
+    } catch (error) {
+      console.error(error);
+      alert(
+        error?.message ||
+          "마일스톤 완료 상태를 변경하지 못했습니다. 다시 시도해주세요.",
+      );
     }
   };
 
@@ -113,6 +312,7 @@ function HomeLayout() {
               }}
               onJoin={() => {
                 setIsTeamActionMenuOpen(false);
+                setJoinInviteCode("");
                 setJoinTeamModalVariant("input");
                 setIsJoinTeamModalOpen(true);
               }}
@@ -128,10 +328,31 @@ function HomeLayout() {
         <Outlet
           context={{
             context: activeContext.type,
-            teamId: activeContext.teamId,
+            isCalendarContextReady: activeId !== null,
+            teamId: activeTeamId,
             teams,
-            onAddMilestone: () => setIsAddMilestoneModalOpen(true),
+            activeTeamId,
+            teamDetail: activeTeamDetail,
+            isTeamDetailLoading,
+            milestones,
+            isMilestonesLoading,
+            milestoneError,
+            onAddMilestone: () => {
+              setSelectedMilestone(null);
+              setIsAddMilestoneModalOpen(true);
+            },
+            onEditMilestone: (milestone) => {
+              setSelectedMilestone(milestone);
+              setIsAddMilestoneModalOpen(true);
+            },
+            onToggleMilestone: handleToggleMilestone,
             onAddMember: () => {
+              if (!activeTeamDetail?.inviteCode) {
+                alert("초대 코드를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
+              }
+
+              setCreatedTeamInviteCode(activeTeamDetail.inviteCode);
               setJoinTeamModalVariant("share");
               setIsJoinTeamModalOpen(true);
             },
@@ -149,34 +370,41 @@ function HomeLayout() {
       <AddTeamModal
         isOpen={isAddTeamModalOpen}
         onClose={() => setIsAddTeamModalOpen(false)}
-        onSubmit={() => {
-          setIsAddTeamModalOpen(false);
-          setJoinTeamModalVariant("share");
-          setIsJoinTeamModalOpen(true);
-        }}
+        onSubmit={handleCreateTeam}
       />
       <JoinTeamModal
         isOpen={isJoinTeamModalOpen}
         variant={joinTeamModalVariant}
+        inviteCode={createdTeamInviteCode || undefined}
         onClose={() => setIsJoinTeamModalOpen(false)}
-        onSubmit={() => {
+        onSubmit={(inviteCode) => {
+          setJoinInviteCode(inviteCode);
           setIsJoinTeamModalOpen(false);
           setIsJoinTeamRoleModalOpen(true);
         }}
       />
       <JoinTeamRoleModal
         isOpen={isJoinTeamRoleModalOpen}
-        onClose={() => setIsJoinTeamRoleModalOpen(false)}
-        onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
+        onClose={() => {
+          setJoinInviteCode("");
+          setIsJoinTeamRoleModalOpen(false);
+        }}
+        onSubmit={handleJoinTeam}
       />
-      <AddMilestoneSelfModal
-        isOpen={isAddMilestoneModalOpen}
-        onClose={() => setIsAddMilestoneModalOpen(false)}
-        onSubmit={() => setIsAddMilestoneModalOpen(false)}
-      />
+      {isAddMilestoneModalOpen ? (
+        <AddMilestoneSelfModal
+          isOpen
+          variant={selectedMilestone ? "revision" : "creation"}
+          initialMilestone={selectedMilestone}
+          onClose={closeMilestoneModal}
+          onSubmit={handleSubmitMilestone}
+          onDelete={handleDeleteMilestone}
+        />
+      ) : null}
       <MeetingSuggestion
         isOpen={isMeetingSuggestionOpen}
         variant={meetingSuggestionVariant}
+        teamId={activeTeamId}
         onClose={() => {
           setIsMeetingSuggestionOpen(false);
           setMeetingSuggestionVariant("input");
@@ -191,6 +419,7 @@ function HomeLayout() {
       <MilestoneSuggestion
         isOpen={isMilestoneSuggestionOpen}
         variant={milestoneSuggestionVariant}
+        teamId={activeTeamId}
         onClose={() => {
           setIsMilestoneSuggestionOpen(false);
           setMilestoneSuggestionVariant("input");
@@ -198,6 +427,7 @@ function HomeLayout() {
         onNext={() => setMilestoneSuggestionVariant("select")}
         onBack={() => setMilestoneSuggestionVariant("input")}
         onSubmit={() => {
+          refreshMilestones();
           setIsMilestoneSuggestionOpen(false);
           setMilestoneSuggestionVariant("input");
         }}

@@ -6,33 +6,73 @@ import ModalButton from "./ModalButton.jsx";
 import Textfield from "./Textfield.jsx";
 import TimeInput from "./TimeInput.jsx";
 
-const getCurrentDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+const pad = (value) => String(value).padStart(2, "0");
 
-  return `${year}-${month}-${day}`;
+const getFormValues = (milestone) => {
+  const dueDate = milestone?.dueDateTime
+    ? new Date(milestone.dueDateTime)
+    : new Date();
+  const hour = dueDate.getHours();
+
+  return {
+    title: milestone?.title ?? "",
+    date: `${dueDate.getFullYear()}-${pad(dueDate.getMonth() + 1)}-${pad(dueDate.getDate())}`,
+    meridiem: hour >= 12 ? "PM" : "AM",
+    time: {
+      hour: pad(hour % 12 || 12),
+      minute: pad(dueDate.getMinutes()),
+    },
+  };
 };
 
-function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(getCurrentDate);
-  const [meridiem, setMeridiem] = useState();
-  const [time, setTime] = useState();
-  const canSubmit = title.trim().length > 0;
+const toDueDateTime = (date, time, meridiem) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const hour = (Number(time.hour) % 12) + (meridiem === "PM" ? 12 : 0);
+
+  return new Date(
+    year,
+    month - 1,
+    day,
+    hour,
+    Number(time.minute),
+  ).toISOString();
+};
+
+function AddMilestoneSelfModal({
+  isOpen,
+  variant = "creation",
+  initialMilestone,
+  onClose,
+  onSubmit,
+  onDelete,
+}) {
+  const initialValues = getFormValues(initialMilestone);
+  const [title, setTitle] = useState(initialValues.title);
+  const [date, setDate] = useState(initialValues.date);
+  const [meridiem, setMeridiem] = useState(initialValues.meridiem);
+  const [time, setTime] = useState(initialValues.time);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [submitError, setSubmitError] = useState("");
+  const isRevision = variant === "revision";
+  const isSubmitting = pendingAction !== null;
+  const canSubmit = Boolean(
+    title.trim() && date && time && meridiem && !isSubmitting,
+  );
 
   const resetForm = useCallback(() => {
-    setTitle("");
-    setDate(getCurrentDate());
-    setMeridiem(undefined);
-    setTime(undefined);
-  }, []);
+    const values = getFormValues(initialMilestone);
+    setTitle(values.title);
+    setDate(values.date);
+    setMeridiem(values.meridiem);
+    setTime(values.time);
+    setSubmitError("");
+  }, [initialMilestone]);
 
   const handleClose = useCallback(() => {
+    if (isSubmitting) return;
     resetForm();
     onClose?.();
-  }, [onClose, resetForm]);
+  }, [isSubmitting, onClose, resetForm]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -47,16 +87,46 @@ function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!canSubmit) return;
 
-    onSubmit?.({
-      title: title.trim(),
-      date,
-      time: { ...time, meridiem },
-    });
-    resetForm();
+    setPendingAction("save");
+    setSubmitError("");
+
+    try {
+      await onSubmit?.({
+        title: title.trim(),
+        dueDateTime: toDueDateTime(date, time, meridiem),
+      });
+    } catch (error) {
+      console.error(error);
+      setSubmitError(
+        error?.message ||
+          `마일스톤을 ${isRevision ? "수정" : "등록"}하지 못했습니다. 잠시 후 다시 시도해주세요.`,
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isRevision || isSubmitting) return;
+
+    setPendingAction("delete");
+    setSubmitError("");
+
+    try {
+      await onDelete?.();
+    } catch (error) {
+      console.error(error);
+      setSubmitError(
+        error?.message ||
+          "마일스톤을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   return (
@@ -75,7 +145,8 @@ function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
             <button
               type="button"
               onClick={handleClose}
-              className="size-6 cursor-pointer"
+              disabled={isSubmitting}
+              className="size-6 cursor-pointer disabled:cursor-not-allowed"
             >
               <img src={closeIcon} alt="" />
             </button>
@@ -85,6 +156,7 @@ function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="New Milestone"
+                disabled={isSubmitting}
                 className="w-full"
               />
 
@@ -94,6 +166,7 @@ function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
                   <DateInput
                     value={date}
                     onChange={(event) => setDate(event.target.value)}
+                    disabled={isSubmitting}
                     className="h-9.5 w-full"
                   />
                 </div>
@@ -101,22 +174,49 @@ function AddMilestoneSelfModal({ isOpen, onClose, onSubmit }) {
                 <div className="flex w-full flex-col gap-4">
                   <h3 className="text-title3 text-gray-900">Time</h3>
                   <div className="flex w-full flex-col gap-3">
-                    <Meridiem onChange={setMeridiem} />
-                    <TimeInput onChange={setTime} />
+                    <Meridiem
+                      defaultValue={initialValues.meridiem}
+                      onChange={setMeridiem}
+                      disabled={isSubmitting}
+                    />
+                    <TimeInput
+                      key={`${initialValues.time.hour}-${initialValues.time.minute}`}
+                      defaultHour={initialValues.time.hour}
+                      defaultMinute={initialValues.time.minute}
+                      onChange={setTime}
+                    />
                   </div>
                 </div>
               </div>
+
+              {submitError ? (
+                <p className="text-body3 text-red-600">
+                  {submitError}
+                </p>
+              ) : null}
             </div>
           </div>
 
-          <ModalButton
-            type="submit"
-            variant={canSubmit ? "on" : "off"}
-            disabled={!canSubmit}
-            className="w-full"
-          >
-            Done
-          </ModalButton>
+          <div className={`flex gap-2.5 ${isRevision ? "" : "w-full"}`}>
+            {isRevision ? (
+              <ModalButton
+                type="button"
+                variant="border"
+                disabled={isSubmitting}
+                onClick={handleDelete}
+              >
+                {pendingAction === "delete" ? "Deleting..." : "Delete"}
+              </ModalButton>
+            ) : null}
+            <ModalButton
+              type="submit"
+              variant={canSubmit ? "on" : "off"}
+              disabled={!canSubmit}
+              className={isRevision ? "w-24.5" : "w-full"}
+            >
+              {pendingAction === "save" ? "Saving..." : "Done"}
+            </ModalButton>
+          </div>
         </form>
       </section>
     </div>

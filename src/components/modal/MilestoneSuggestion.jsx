@@ -4,40 +4,10 @@ import DateInput from "./DateInput.jsx";
 import ModalButton from "./ModalButton.jsx";
 import SuggestionCard from "./SuggestionCard.jsx";
 import Textfield from "./Textfield.jsx";
-
-const MOCK_RECOMMENDATIONS = [
-  {
-    id: 1,
-    title: "Project Kickoff",
-    description: "Aug 10 · Project setup and team alignment",
-  },
-  {
-    id: 2,
-    title: "User Research Complete",
-    description: "Aug 14 · Complete research and define key insights",
-  },
-  {
-    id: 3,
-    title: "Wireframe Complete",
-    description: "Aug 18 · Finalize the core user flow and wireframes",
-  },
-  {
-    id: 4,
-    title: "Prototype Review",
-    description: "Aug 21 · Review the interactive prototype",
-  },
-  {
-    id: 5,
-    title: "Usability Testing",
-    description:
-      "Aug 25 · Validate the product with target usersValidate the product with target usersValidate the product with target usersValidate the product with target users",
-  },
-  {
-    id: 6,
-    title: "Final Presentation",
-    description: "Aug 28 · Present the completed project",
-  },
-];
+import {
+  createRecommendedMilestones,
+  recommendMilestones,
+} from "../../api/calendar.js";
 
 const getCurrentDate = () => {
   const today = new Date();
@@ -48,6 +18,20 @@ const getCurrentDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const milestoneDateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Seoul",
+  month: "short",
+  day: "numeric",
+});
+
+const toDueDateTime = (date) => new Date(`${date}T23:59:59`).toISOString();
+
+const toRecommendation = (recommendation, index) => ({
+  ...recommendation,
+  id: `${recommendation.title}-${recommendation.dueDateTime}-${index}`,
+  description: `${milestoneDateFormatter.format(new Date(recommendation.dueDateTime))} · ${recommendation.description ?? ""}`,
+});
+
 function MilestoneSuggestion({
   isOpen,
   variant = "input",
@@ -55,18 +39,27 @@ function MilestoneSuggestion({
   onNext,
   onBack,
   onSubmit,
+  teamId,
 }) {
   const [projectType, setProjectType] = useState("");
   const [deadline, setDeadline] = useState(getCurrentDate);
-  const [selectedRecommendationId, setSelectedRecommendationId] = useState(1);
+  const [recommendations, setRecommendations] = useState([]);
+  const [selectedRecommendationIds, setSelectedRecommendationIds] = useState([]);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   const isInputVariant = variant === "input";
-  const canRequest = projectType.trim() && deadline;
+  const canRequest = projectType.trim() && deadline && teamId != null;
 
   const resetState = useCallback(() => {
     setProjectType("");
     setDeadline(getCurrentDate());
-    setSelectedRecommendationId(1);
+    setRecommendations([]);
+    setSelectedRecommendationIds([]);
+    setIsRequesting(false);
+    setIsCreating(false);
+    setRequestError("");
   }, []);
 
   const handleClose = useCallback(() => {
@@ -87,20 +80,62 @@ function MilestoneSuggestion({
 
   if (!isOpen || !["input", "select"].includes(variant)) return null;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (isInputVariant) {
-      if (canRequest) onNext?.({ projectType: projectType.trim(), deadline });
+      if (!canRequest || isRequesting) return;
+
+      setIsRequesting(true);
+      setRequestError("");
+
+      try {
+        const result = await recommendMilestones(teamId, {
+          projectType: projectType.trim(),
+          dueDateTime: toDueDateTime(deadline),
+        });
+        const nextRecommendations = Array.isArray(result)
+          ? result.slice(0, 6).map(toRecommendation)
+          : [];
+
+        setRecommendations(nextRecommendations);
+        setSelectedRecommendationIds([]);
+        onNext?.();
+      } catch (error) {
+        console.error(error);
+        setRequestError(
+          error?.message ||
+            "마일스톤을 추천받지 못했습니다. 잠시 후 다시 시도해주세요.",
+        );
+      } finally {
+        setIsRequesting(false);
+      }
+
       return;
     }
 
-    const recommendation = MOCK_RECOMMENDATIONS.find(
-      ({ id }) => id === selectedRecommendationId,
-    );
+    if (selectedRecommendationIds.length === 0 || isCreating) return;
 
-    onSubmit?.({ projectType: projectType.trim(), deadline, recommendation });
-    resetState();
+    const milestones = recommendations
+      .filter(({ id }) => selectedRecommendationIds.includes(id))
+      .map(({ title, dueDateTime }) => ({ title, dueDateTime }));
+
+    setIsCreating(true);
+    setRequestError("");
+
+    try {
+      await createRecommendedMilestones(teamId, milestones);
+      onSubmit?.();
+      resetState();
+    } catch (error) {
+      console.error(error);
+      setRequestError(
+        error?.message ||
+          "마일스톤을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -144,28 +179,50 @@ function MilestoneSuggestion({
                     onChange={(event) => setDeadline(event.target.value)}
                   />
                 </div>
+
+                {requestError ? (
+                  <p role="alert" className="text-body3 text-red-600">
+                    {requestError}
+                  </p>
+                ) : null}
               </div>
             ) : (
               <div className="flex min-h-0 w-full flex-1 flex-col gap-5">
                 <h2 className="text-title1 text-gray-900">Recommendations</h2>
 
                 <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
-                  {MOCK_RECOMMENDATIONS.map((recommendation) => (
-                    <SuggestionCard
-                      key={recommendation.id}
-                      title={recommendation.title}
-                      description={recommendation.description}
-                      variant={
-                        selectedRecommendationId === recommendation.id
-                          ? "on"
-                          : "off"
-                      }
-                      onClick={() =>
-                        setSelectedRecommendationId(recommendation.id)
-                      }
-                    />
-                  ))}
+                  {recommendations.length > 0 ? (
+                    recommendations.map((recommendation) => (
+                      <SuggestionCard
+                        key={recommendation.id}
+                        title={recommendation.title}
+                        description={recommendation.description}
+                        variant={
+                          selectedRecommendationIds.includes(recommendation.id)
+                            ? "on"
+                            : "off"
+                        }
+                        onClick={() =>
+                          setSelectedRecommendationIds((currentIds) =>
+                            currentIds.includes(recommendation.id)
+                              ? currentIds.filter((id) => id !== recommendation.id)
+                              : [...currentIds, recommendation.id].slice(0, 6),
+                          )
+                        }
+                      />
+                    ))
+                  ) : (
+                    <p className="py-8 text-center text-body2 text-gray-700">
+                      추천할 수 있는 마일스톤이 없습니다.
+                    </p>
+                  )}
                 </div>
+
+                {requestError ? (
+                  <p role="alert" className="text-body3 text-red-600">
+                    {requestError}
+                  </p>
+                ) : null}
               </div>
             )}
           </div>
@@ -173,10 +230,10 @@ function MilestoneSuggestion({
           {isInputVariant ? (
             <ModalButton
               type="submit"
-              variant={canRequest ? "on" : "off"}
-              disabled={!canRequest}
+              variant={canRequest && !isRequesting ? "on" : "off"}
+              disabled={!canRequest || isRequesting}
             >
-              Get Recommendations
+              {isRequesting ? "Loading..." : "Get Recommendations"}
             </ModalButton>
           ) : (
             <div className="flex gap-2.5">
@@ -188,8 +245,17 @@ function MilestoneSuggestion({
               >
                 Enter Manually
               </ModalButton>
-              <ModalButton type="submit" variant="on" className="w-24.5">
-                Done
+              <ModalButton
+                type="submit"
+                variant={
+                  selectedRecommendationIds.length > 0 && !isCreating
+                    ? "on"
+                    : "off"
+                }
+                disabled={selectedRecommendationIds.length === 0 || isCreating}
+                className="w-24.5"
+              >
+                {isCreating ? "Loading..." : "Done"}
               </ModalButton>
             </div>
           )}

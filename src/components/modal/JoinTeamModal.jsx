@@ -7,6 +7,11 @@ import ModalButton from "./ModalButton.jsx";
 const CODE_LENGTH = 6;
 const MOCK_INVITE_CODE = "Y2EQ93";
 const createEmptyCode = () => Array(CODE_LENGTH).fill("");
+const normalizeInviteCode = (value) =>
+  String(value)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, CODE_LENGTH);
 
 function JoinTeam({
   isOpen,
@@ -20,10 +25,7 @@ function JoinTeam({
   const inputRefs = useRef([]);
   const isInputVariant = variant === "input";
   const isComplete = code.every(Boolean);
-  const normalizedInviteCode = String(inviteCode)
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, CODE_LENGTH);
+  const normalizedInviteCode = normalizeInviteCode(inviteCode);
   const shareCode = Array.from(
     { length: CODE_LENGTH },
     (_, index) => normalizedInviteCode[index] ?? "",
@@ -65,6 +67,37 @@ function JoinTeam({
     if (nextCharacter && index < CODE_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
+  };
+
+  const handleCodePaste = (index, event) => {
+    event.preventDefault();
+
+    const pastedCode = normalizeInviteCode(
+      event.clipboardData.getData("text"),
+    );
+    if (!pastedCode) return;
+
+    const startIndex = pastedCode.length === CODE_LENGTH ? 0 : index;
+    const pastedCharacters = Array.from(pastedCode).slice(
+      0,
+      CODE_LENGTH - startIndex,
+    );
+
+    setCode((currentCode) => {
+      const nextCode = [...currentCode];
+
+      pastedCharacters.forEach((character, characterIndex) => {
+        nextCode[startIndex + characterIndex] = character;
+      });
+
+      return nextCode;
+    });
+
+    const nextFocusIndex = Math.min(
+      startIndex + pastedCharacters.length,
+      CODE_LENGTH - 1,
+    );
+    inputRefs.current[nextFocusIndex]?.focus();
   };
 
   const handleSubmit = (event) => {
@@ -133,6 +166,11 @@ function JoinTeam({
                     onChange={
                       isInputVariant
                         ? (event) => handleCodeChange(index, event)
+                        : undefined
+                    }
+                    onPaste={
+                      isInputVariant
+                        ? (event) => handleCodePaste(index, event)
                         : undefined
                     }
                   >

@@ -8,17 +8,16 @@ import Textfield from "./Textfield.jsx";
 import TimeInput from "./TimeInput.jsx";
 
 const PRIORITIES = ["Low", "Medium", "High"];
-
-const getCurrentDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+const PRIORITY_WEIGHTS = {
+  Low: 1,
+  Medium: 2,
+  High: 3,
 };
-
-const DEFAULT_DATE = getCurrentDate();
+const WEIGHT_PRIORITIES = {
+  1: "Low",
+  2: "Medium",
+  3: "High",
+};
 
 const convertToMinutes = ({ hour, minute }, meridiem) => {
   const hourNumber = Number(hour);
@@ -28,15 +27,67 @@ const convertToMinutes = ({ hour, minute }, meridiem) => {
   return normalizedHour * 60 + minuteNumber;
 };
 
-function AddPersonal({ isOpen, onClose, onSubmit }) {
-  const [eventName, setEventName] = useState("");
-  const [startDate, setStartDate] = useState(DEFAULT_DATE);
-  const [endDate, setEndDate] = useState(DEFAULT_DATE);
-  const [startMeridiem, setStartMeridiem] = useState();
-  const [endMeridiem, setEndMeridiem] = useState();
-  const [startTime, setStartTime] = useState();
-  const [endTime, setEndTime] = useState();
-  const [priority, setPriority] = useState("Low");
+const toUtcDateTime = (date, time, meridiem) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const hour = (Number(time.hour) % 12) + (meridiem === "PM" ? 12 : 0);
+
+  return new Date(
+    year,
+    month - 1,
+    day,
+    hour,
+    Number(time.minute),
+  ).toISOString();
+};
+
+const toDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const toTimeInputValue = (date) => ({
+  hour: String(date.getHours() % 12 || 12).padStart(2, "0"),
+  minute: String(date.getMinutes()).padStart(2, "0"),
+  meridiem: date.getHours() >= 12 ? "PM" : "AM",
+});
+
+function AddPersonal({
+  isOpen,
+  variant = "creation",
+  initialSchedule,
+  onClose,
+  onSubmit,
+  onDelete,
+}) {
+  const isRevision = variant === "revision";
+  const initialStartDate = initialSchedule?.startDate ?? new Date();
+  const initialEndDate = initialSchedule?.endDate ?? initialStartDate;
+  const initialStartTime = toTimeInputValue(initialStartDate);
+  const initialEndTime = toTimeInputValue(initialEndDate);
+  const [eventName, setEventName] = useState(initialSchedule?.title ?? "");
+  const [startDate, setStartDate] = useState(() =>
+    toDateInputValue(initialStartDate),
+  );
+  const [endDate, setEndDate] = useState(() =>
+    toDateInputValue(initialEndDate),
+  );
+  const [startMeridiem, setStartMeridiem] = useState(
+    initialStartTime.meridiem,
+  );
+  const [endMeridiem, setEndMeridiem] = useState(initialEndTime.meridiem);
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
+  const [priority, setPriority] = useState(
+    WEIGHT_PRIORITIES[Number(initialSchedule?.weight)] ?? "Low",
+  );
+  const [pendingAction, setPendingAction] = useState(null);
+  const [submitError, setSubmitError] = useState("");
+  const isSubmitting = pendingAction !== null;
+
+  const isDateRangeInvalid = endDate < startDate;
 
   const isEndTimeEarlier =
     startTime &&
@@ -47,47 +98,90 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
     convertToMinutes(endTime, endMeridiem) <
       convertToMinutes(startTime, startMeridiem);
 
+  const canSubmit = Boolean(
+    eventName.trim().length > 0 &&
+    startTime &&
+    endTime &&
+    startMeridiem &&
+    endMeridiem &&
+    !isDateRangeInvalid &&
+    !isEndTimeEarlier &&
+    !isSubmitting,
+  );
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") onClose?.();
+      if (event.key === "Escape" && !isSubmitting) onClose?.();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, isSubmitting, onClose]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (isEndTimeEarlier) return;
+    if (!canSubmit) return;
 
-    onSubmit?.({
-      eventName,
-      startDate,
-      endDate,
-      startTime: { ...startTime, meridiem: startMeridiem },
-      endTime: { ...endTime, meridiem: endMeridiem },
-      priority,
-    });
+    setSubmitError("");
+    setPendingAction("save");
+
+    try {
+      await onSubmit?.({
+        title: eventName.trim(),
+        startDateTime: toUtcDateTime(startDate, startTime, startMeridiem),
+        endDateTime: toUtcDateTime(endDate, endTime, endMeridiem),
+        weight: PRIORITY_WEIGHTS[priority],
+      });
+
+    } catch (error) {
+      console.error(error);
+      setSubmitError(
+        error?.message ||
+          `개인 일정을 ${isRevision ? "수정" : "등록"}하지 못했습니다. 잠시 후 다시 시도해주세요.`,
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isRevision || isSubmitting) return;
+
+    setSubmitError("");
+    setPendingAction("delete");
+
+    try {
+      await onDelete?.();
+    } catch (error) {
+      console.error(error);
+      setSubmitError(
+        error?.message ||
+          "개인 일정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose?.();
+        if (event.target === event.currentTarget && !isSubmitting) onClose?.();
       }}
     >
-      <section className="rounded-28 bg-white p-6">
-        <div className="flex flex-col items-end gap-7" onSubmit={handleSubmit}>
+      <section className="rounded-28 bg-white p-6 drop-shadow-[0_0_10px_rgba(0,0,0,0.15)]">
+        <form className="flex flex-col items-end gap-7" onSubmit={handleSubmit}>
           <div className="flex w-full flex-col items-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="size-6 cursor-pointer"
+              disabled={isSubmitting}
+              className="size-6 cursor-pointer disabled:cursor-not-allowed"
             >
               <img src={closeIcon} alt="" />
             </button>
@@ -121,8 +215,15 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
                   <h3 className="text-title3 text-gray-900">Time</h3>
                   <div className="flex h-21 w-full items-end">
                     <div className="flex w-32.5 flex-col gap-3">
-                      <Meridiem onChange={setStartMeridiem} />
-                      <TimeInput onChange={setStartTime} />
+                      <Meridiem
+                        defaultValue={startMeridiem}
+                        onChange={setStartMeridiem}
+                      />
+                      <TimeInput
+                        defaultHour={startTime?.hour}
+                        defaultMinute={startTime?.minute}
+                        onChange={setStartTime}
+                      />
                     </div>
 
                     <span className="flex h-9 flex-1 items-center justify-center text-subtitle2">
@@ -130,8 +231,15 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
                     </span>
 
                     <div className="flex w-32.5 flex-col gap-3">
-                      <Meridiem onChange={setEndMeridiem} />
-                      <TimeInput onChange={setEndTime} />
+                      <Meridiem
+                        defaultValue={endMeridiem}
+                        onChange={setEndMeridiem}
+                      />
+                      <TimeInput
+                        defaultHour={endTime?.hour}
+                        defaultMinute={endTime?.minute}
+                        onChange={setEndTime}
+                      />
                     </div>
                   </div>
                 </div>
@@ -151,19 +259,37 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
                     ))}
                   </div>
                 </div>
+
+                {submitError && (
+                  <p role="alert" className="text-body2 text-red-700">
+                    {submitError}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          <ModalButton
-            type="submit"
-            variant={isEndTimeEarlier ? "off" : "on"}
-            disabled={isEndTimeEarlier}
-            className="w-24.5"
-          >
-            Done
-          </ModalButton>
-        </div>
+          <div className="flex items-center gap-3">
+            {isRevision && (
+              <ModalButton
+                type="button"
+                variant="border"
+                disabled={isSubmitting}
+                onClick={handleDelete}
+              >
+                {pendingAction === "delete" ? "Deleting..." : "Delete"}
+              </ModalButton>
+            )}
+            <ModalButton
+              type="submit"
+              variant={canSubmit ? "on" : "off"}
+              disabled={!canSubmit}
+              className="w-24.5"
+            >
+              {pendingAction === "save" ? "Saving..." : "Done"}
+            </ModalButton>
+          </div>
+        </form>
       </section>
     </div>
   );

@@ -28,7 +28,7 @@ function ModalButton({
     <button
       {...buttonProps}
       type={type}
-      className={`flex shrink-0 items-center justify-center rounded-12 ${sizeStyle} ${variantStyle} ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-12 disabled:cursor-not-allowed disabled:opacity-60 ${sizeStyle} ${variantStyle} ${className}`}
     >
       {children}
     </button>

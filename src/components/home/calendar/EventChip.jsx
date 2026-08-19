@@ -7,7 +7,7 @@ const COLOR_STYLES = {
   p: { bg: "bg-[#faf5ff]", border: "border-[#e8d2ff]", text: "text-[#7e22ce]" },
 };
 
-function EventChip({ color, title, person }) {
+function EventChip({ color, title, person, onClick }) {
   const style = COLOR_STYLES[color];
 
   if (color === "p") {
@@ -23,15 +23,19 @@ function EventChip({ color, title, person }) {
     );
   }
 
+  const Component = onClick ? "button" : "div";
+
   return (
-    <div
-      className={`flex w-[77px] flex-col items-start gap-0.5 rounded-[6px] border-[0.8px] px-2 py-1.5 ${style.bg} ${style.border}`}
+    <Component
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`flex w-[77px] flex-col items-start gap-0.5 rounded-[6px] border-[0.8px] px-2 py-1.5 ${style.bg} ${style.border} ${onClick ? "cursor-pointer text-left" : ""}`}
     >
       <p className={`w-full truncate text-title5 ${style.text}`}>{title}</p>
       <span className="flex h-3 max-w-[64px] items-center justify-center rounded-[2px] bg-white px-1">
         <span className={`truncate text-label2 ${style.text}`}>{person}</span>
       </span>
-    </div>
+    </Component>
   );
 }
 
