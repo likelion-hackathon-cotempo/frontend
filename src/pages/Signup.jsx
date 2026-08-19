@@ -4,6 +4,11 @@ import { CheckIcon } from "../components/icons/index.jsx";
 import { signup } from "../api/auth"; 
 
 const COUNTRIES = ["KR", "VN", "US"];
+const COUNTRY_TIMEZONES = {
+  KR: "Asia/Seoul",
+  VN: "Asia/Ho_Chi_Minh",
+  US: "America/Los_Angeles",
+};
 
 function Signup() {
   const navigate = useNavigate();
@@ -89,7 +94,10 @@ const isValid = name && isEmailValid && password && country && timezone;
                   <button
                     key={code}
                     type="button"
-                    onClick={() => setCountry(code)}
+                    onClick={() => {
+                      setCountry(code);
+                      setTimezone(COUNTRY_TIMEZONES[code]);
+                    }}
                     className={`flex cursor-pointer items-center justify-between rounded-12 border px-4 py-3 text-subtitle2 transition-colors ${
                       selected
                         ? "border-purple-600 bg-purple-200 text-gray-900"
