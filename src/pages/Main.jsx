@@ -20,6 +20,7 @@ function Main() {
       <aside className="w-[325px] shrink-0 overflow-y-auto">
         <SidePanel
           context={context}
+          teamId={teamId}
           onAddMilestone={onAddMilestone}
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
