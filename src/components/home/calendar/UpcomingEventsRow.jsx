@@ -32,6 +32,7 @@ function UpcomingEventsRow({ events, isLoading }) {
           date={event.date}
           time={event.time}
           members={event.members}
+          category={event.category}
         />
       ))}
     </div>

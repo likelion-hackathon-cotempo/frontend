@@ -7,12 +7,16 @@ const AVATAR_GRADIENTS = [
   { from: "#b3ffcb", to: "#50cb76" },
   { from: "#ecdbff", to: "#6c11d4" },
 ];
+const PERSONAL_AVATAR_GRADIENT = { from: "#daddff", to: "#4e2ea8" };
 
-function AvatarStack({ members }) {
+function AvatarStack({ members, category }) {
   return (
     <div className="flex items-center">
       {members.map((member, index) => {
-        const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
+        const gradient =
+          category === "personal"
+            ? PERSONAL_AVATAR_GRADIENT
+            : AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
         return (
           <div
             key={`${member}-${index}`}
@@ -30,7 +34,7 @@ function AvatarStack({ members }) {
   );
 }
 
-function UpcomingEventCard({ title, date, time, members }) {
+function UpcomingEventCard({ title, date, time, members, category }) {
   return (
     <div className="flex w-[270px] shrink-0 items-end justify-between rounded-[28px] border border-white bg-white/65 px-5 py-4">
       <div className="flex flex-col gap-2">
@@ -46,7 +50,7 @@ function UpcomingEventCard({ title, date, time, members }) {
           </div>
         </div>
       </div>
-      <AvatarStack members={members} />
+      <AvatarStack members={members} category={category} />
     </div>
   );
 }
