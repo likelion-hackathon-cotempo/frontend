@@ -7,7 +7,11 @@ import CalendarFilters from "./CalendarFilters.jsx";
 import AddTeamEventModal from "../../modal/AddTeamEventModal.jsx";
 import AddPersonalModal from "../../modal/AddPersonalModal.jsx";
 import useCalendarEvents from "./useCalendarEvents.js";
-import { createPersonalSchedule } from "../../../api/calendar.js";
+import {
+  createPersonalSchedule,
+  deletePersonalSchedule,
+  updatePersonalSchedule,
+} from "../../../api/calendar.js";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -65,6 +69,7 @@ function CalendarPage({
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [activeFilters, setActiveFilters] = useState([]);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [selectedPersonalEvent, setSelectedPersonalEvent] = useState(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -84,9 +89,25 @@ function CalendarPage({
 
   const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
-  const handleCreatePersonalSchedule = async (schedule) => {
-    await createPersonalSchedule(schedule);
+  const closeEventModal = () => {
     setIsCreateEventOpen(false);
+    setSelectedPersonalEvent(null);
+  };
+  const handleSubmitPersonalSchedule = async (schedule) => {
+    if (selectedPersonalEvent) {
+      await updatePersonalSchedule(selectedPersonalEvent.id, schedule);
+    } else {
+      await createPersonalSchedule(schedule);
+    }
+
+    closeEventModal();
+    refresh();
+  };
+  const handleDeletePersonalSchedule = async () => {
+    if (!selectedPersonalEvent) return;
+
+    await deletePersonalSchedule(selectedPersonalEvent.id);
+    closeEventModal();
     refresh();
   };
 
@@ -111,7 +132,12 @@ function CalendarPage({
           onPrevMonth={goToPrevMonth}
           onNextMonth={goToNextMonth}
         />
-        <CreateEventButton onClick={() => setIsCreateEventOpen(true)} />
+        <CreateEventButton
+          onClick={() => {
+            setSelectedPersonalEvent(null);
+            setIsCreateEventOpen(true);
+          }}
+        />
       </div>
       <UpcomingEventsRow events={events} isLoading={isLoading} />
       {error && (
@@ -129,19 +155,31 @@ function CalendarPage({
         month={month}
         events={filterEvents(eventsByDay, visibleActiveFilters)}
         todayDay={isCurrentMonth ? today.getDate() : null}
+        onPersonalEventClick={
+          context === "me"
+            ? (event) => {
+                setSelectedPersonalEvent(event);
+                setIsCreateEventOpen(true);
+              }
+            : undefined
+        }
       />
       {context === "me" ? (
         <AddPersonalModal
+          key={selectedPersonalEvent?.id ?? "creation"}
           isOpen={isCreateEventOpen}
-          onClose={() => setIsCreateEventOpen(false)}
-          onSubmit={handleCreatePersonalSchedule}
+          variant={selectedPersonalEvent ? "revision" : "creation"}
+          initialSchedule={selectedPersonalEvent}
+          onClose={closeEventModal}
+          onSubmit={handleSubmitPersonalSchedule}
+          onDelete={handleDeletePersonalSchedule}
         />
       ) : (
         <AddTeamEventModal
           isOpen={isCreateEventOpen}
           members={teamMembers}
-          onClose={() => setIsCreateEventOpen(false)}
-          onSubmit={() => setIsCreateEventOpen(false)}
+          onClose={closeEventModal}
+          onSubmit={closeEventModal}
         />
       )}
     </div>

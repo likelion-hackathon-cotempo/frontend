@@ -85,11 +85,13 @@ const toCalendarEvent = (schedule) => {
     milestone: "p",
     holiday: "green",
   };
+  const id = schedule.id ?? schedule.personalScheduleId;
 
   return {
-    key: [schedule.type, schedule.id, startDate.toISOString()].join(":"),
-    id: schedule.id,
+    key: [schedule.type, id, startDate.toISOString()].join(":"),
+    id,
     title: schedule.title,
+    weight: schedule.weight,
     category,
     color: colorByCategory[category],
     person:

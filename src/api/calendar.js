@@ -23,3 +23,9 @@ export const getTeamCalendar = (teamId, year, month, config) =>
 
 export const createPersonalSchedule = (body) =>
   client.post("/api/v1/schedules", body);
+
+export const updatePersonalSchedule = (personalScheduleId, body) =>
+  client.patch(`/api/v1/schedules/${personalScheduleId}`, body);
+
+export const deletePersonalSchedule = (personalScheduleId) =>
+  client.delete(`/api/v1/schedules/${personalScheduleId}`);

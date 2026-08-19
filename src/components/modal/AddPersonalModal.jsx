@@ -13,6 +13,11 @@ const PRIORITY_WEIGHTS = {
   Medium: 2,
   High: 3,
 };
+const WEIGHT_PRIORITIES = {
+  1: "Low",
+  2: "Medium",
+  3: "High",
+};
 
 const getCurrentDate = () => {
   const today = new Date();
@@ -44,17 +49,58 @@ const toUtcDateTime = (date, time, meridiem) => {
   ).toISOString();
 };
 
-function AddPersonal({ isOpen, onClose, onSubmit }) {
-  const [eventName, setEventName] = useState("");
-  const [startDate, setStartDate] = useState(getCurrentDate);
-  const [endDate, setEndDate] = useState(getCurrentDate);
-  const [startMeridiem, setStartMeridiem] = useState();
-  const [endMeridiem, setEndMeridiem] = useState();
-  const [startTime, setStartTime] = useState();
-  const [endTime, setEndTime] = useState();
-  const [priority, setPriority] = useState("Low");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const toDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const toTimeInputValue = (date) => ({
+  hour: String(date.getHours() % 12 || 12).padStart(2, "0"),
+  minute: String(date.getMinutes()).padStart(2, "0"),
+  meridiem: date.getHours() >= 12 ? "PM" : "AM",
+});
+
+function AddPersonal({
+  isOpen,
+  variant = "creation",
+  initialSchedule,
+  onClose,
+  onSubmit,
+  onDelete,
+}) {
+  const isRevision = variant === "revision";
+  const initialStartDate = initialSchedule?.startDate ?? new Date();
+  const initialEndDate = initialSchedule?.endDate ?? initialStartDate;
+  const initialStartTime = toTimeInputValue(initialStartDate);
+  const initialEndTime = toTimeInputValue(initialEndDate);
+  const [eventName, setEventName] = useState(initialSchedule?.title ?? "");
+  const [startDate, setStartDate] = useState(() =>
+    isRevision ? toDateInputValue(initialStartDate) : getCurrentDate(),
+  );
+  const [endDate, setEndDate] = useState(() =>
+    isRevision ? toDateInputValue(initialEndDate) : getCurrentDate(),
+  );
+  const [startMeridiem, setStartMeridiem] = useState(
+    isRevision ? initialStartTime.meridiem : undefined,
+  );
+  const [endMeridiem, setEndMeridiem] = useState(
+    isRevision ? initialEndTime.meridiem : undefined,
+  );
+  const [startTime, setStartTime] = useState(
+    isRevision ? initialStartTime : undefined,
+  );
+  const [endTime, setEndTime] = useState(
+    isRevision ? initialEndTime : undefined,
+  );
+  const [priority, setPriority] = useState(
+    WEIGHT_PRIORITIES[Number(initialSchedule?.weight)] ?? "Low",
+  );
+  const [pendingAction, setPendingAction] = useState(null);
   const [submitError, setSubmitError] = useState("");
+  const isSubmitting = pendingAction !== null;
 
   const isDateRangeInvalid = endDate < startDate;
 
@@ -67,7 +113,7 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
     convertToMinutes(endTime, endMeridiem) <
       convertToMinutes(startTime, startMeridiem);
 
-  const canSubmit =
+  const canSubmit = Boolean(
     eventName.trim().length > 0 &&
     startTime &&
     endTime &&
@@ -75,7 +121,8 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
     endMeridiem &&
     !isDateRangeInvalid &&
     !isEndTimeEarlier &&
-    !isSubmitting;
+    !isSubmitting,
+  );
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -95,7 +142,7 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
     if (!canSubmit) return;
 
     setSubmitError("");
-    setIsSubmitting(true);
+    setPendingAction("save");
 
     try {
       await onSubmit?.({
@@ -105,23 +152,44 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
         weight: PRIORITY_WEIGHTS[priority],
       });
 
-      const currentDate = getCurrentDate();
-      setEventName("");
-      setStartDate(currentDate);
-      setEndDate(currentDate);
-      setStartMeridiem();
-      setEndMeridiem();
-      setStartTime();
-      setEndTime();
-      setPriority("Low");
+      if (!isRevision) {
+        const currentDate = getCurrentDate();
+        setEventName("");
+        setStartDate(currentDate);
+        setEndDate(currentDate);
+        setStartMeridiem();
+        setEndMeridiem();
+        setStartTime();
+        setEndTime();
+        setPriority("Low");
+      }
     } catch (error) {
       console.error(error);
       setSubmitError(
         error?.message ||
-          "개인 일정을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.",
+          `개인 일정을 ${isRevision ? "수정" : "등록"}하지 못했습니다. 잠시 후 다시 시도해주세요.`,
       );
     } finally {
-      setIsSubmitting(false);
+      setPendingAction(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isRevision || isSubmitting) return;
+
+    setSubmitError("");
+    setPendingAction("delete");
+
+    try {
+      await onDelete?.();
+    } catch (error) {
+      console.error(error);
+      setSubmitError(
+        error?.message ||
+          "개인 일정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -173,8 +241,15 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
                   <h3 className="text-title3 text-gray-900">Time</h3>
                   <div className="flex h-21 w-full items-end">
                     <div className="flex w-32.5 flex-col gap-3">
-                      <Meridiem onChange={setStartMeridiem} />
-                      <TimeInput onChange={setStartTime} />
+                      <Meridiem
+                        defaultValue={startMeridiem}
+                        onChange={setStartMeridiem}
+                      />
+                      <TimeInput
+                        defaultHour={startTime?.hour}
+                        defaultMinute={startTime?.minute}
+                        onChange={setStartTime}
+                      />
                     </div>
 
                     <span className="flex h-9 flex-1 items-center justify-center text-subtitle2">
@@ -182,8 +257,15 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
                     </span>
 
                     <div className="flex w-32.5 flex-col gap-3">
-                      <Meridiem onChange={setEndMeridiem} />
-                      <TimeInput onChange={setEndTime} />
+                      <Meridiem
+                        defaultValue={endMeridiem}
+                        onChange={setEndMeridiem}
+                      />
+                      <TimeInput
+                        defaultHour={endTime?.hour}
+                        defaultMinute={endTime?.minute}
+                        onChange={setEndTime}
+                      />
                     </div>
                   </div>
                 </div>
@@ -213,14 +295,26 @@ function AddPersonal({ isOpen, onClose, onSubmit }) {
             </div>
           </div>
 
-          <ModalButton
-            type="submit"
-            variant={canSubmit ? "on" : "off"}
-            disabled={!canSubmit}
-            className="w-24.5"
-          >
-            {isSubmitting ? "Saving..." : "Done"}
-          </ModalButton>
+          <div className="flex items-center gap-3">
+            {isRevision && (
+              <ModalButton
+                type="button"
+                variant="border"
+                disabled={isSubmitting}
+                onClick={handleDelete}
+              >
+                {pendingAction === "delete" ? "Deleting..." : "Delete"}
+              </ModalButton>
+            )}
+            <ModalButton
+              type="submit"
+              variant={canSubmit ? "on" : "off"}
+              disabled={!canSubmit}
+              className="w-24.5"
+            >
+              {pendingAction === "save" ? "Saving..." : "Done"}
+            </ModalButton>
+          </div>
         </form>
       </section>
     </div>
