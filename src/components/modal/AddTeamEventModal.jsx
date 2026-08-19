@@ -7,15 +7,6 @@ import Textfield from "./Textfield.jsx";
 import TimeInput from "./TimeInput.jsx";
 import MemberChip from "./MemberChip.jsx";
 
-const getCurrentDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
 const convertToMinutes = ({ hour, minute }, meridiem) => {
   const hourNumber = Number(hour);
   const minuteNumber = Number(minute);
@@ -73,23 +64,17 @@ function AddTeamEventModal({
         : [];
   const [eventName, setEventName] = useState(initialEvent?.title ?? "");
   const [startDate, setStartDate] = useState(() =>
-    isRevision ? toDateInputValue(initialStartDate) : getCurrentDate(),
+    toDateInputValue(initialStartDate),
   );
   const [endDate, setEndDate] = useState(() =>
-    isRevision ? toDateInputValue(initialEndDate) : getCurrentDate(),
+    toDateInputValue(initialEndDate),
   );
   const [startMeridiem, setStartMeridiem] = useState(
-    isRevision ? initialStartTime.meridiem : undefined,
+    initialStartTime.meridiem,
   );
-  const [endMeridiem, setEndMeridiem] = useState(
-    isRevision ? initialEndTime.meridiem : undefined,
-  );
-  const [startTime, setStartTime] = useState(
-    isRevision ? initialStartTime : undefined,
-  );
-  const [endTime, setEndTime] = useState(
-    isRevision ? initialEndTime : undefined,
-  );
+  const [endMeridiem, setEndMeridiem] = useState(initialEndTime.meridiem);
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
   const [selectedMemberIds, setSelectedMemberIds] =
     useState(initialMemberIds);
   const [pendingAction, setPendingAction] = useState(null);
@@ -154,17 +139,6 @@ function AddTeamEventModal({
         endDateTime: toUtcDateTime(endDate, endTime, endMeridiem),
       });
 
-      if (!isRevision) {
-        const currentDate = getCurrentDate();
-        setEventName("");
-        setStartDate(currentDate);
-        setEndDate(currentDate);
-        setStartMeridiem();
-        setEndMeridiem();
-        setStartTime();
-        setEndTime();
-        setSelectedMemberIds([]);
-      }
     } catch (error) {
       console.error(error);
       setSubmitError(

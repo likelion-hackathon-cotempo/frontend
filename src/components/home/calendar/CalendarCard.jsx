@@ -141,7 +141,7 @@ function CalendarCard({
             : undefined
         }
       />
-      {context === "me" ? (
+      {isCreateEventOpen && (context === "me" ? (
         <AddPersonalModal
           key={selectedPersonalEvent?.id ?? "creation"}
           isOpen={isCreateEventOpen}
@@ -162,7 +162,7 @@ function CalendarCard({
           onSubmit={handleSubmitTeamEvent}
           onDelete={handleDeleteTeamEvent}
         />
-      )}
+      ))}
     </div>
   );
 }

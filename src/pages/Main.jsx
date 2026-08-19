@@ -15,6 +15,7 @@ function Main() {
     milestoneError,
     onAddMilestone,
     onEditMilestone,
+    onToggleMilestone,
     onAddMember,
     onConfirmMeetingSuggestion,
     onRecommendMilestones,
@@ -41,6 +42,7 @@ function Main() {
           milestoneError={milestoneError}
           onAddMilestone={onAddMilestone}
           onEditMilestone={onEditMilestone}
+          onToggleMilestone={onToggleMilestone}
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
           onRecommendMilestones={onRecommendMilestones}

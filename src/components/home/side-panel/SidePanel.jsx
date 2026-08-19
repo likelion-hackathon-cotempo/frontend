@@ -21,6 +21,7 @@ function SidePanel({
   milestoneError,
   onAddMilestone,
   onEditMilestone,
+  onToggleMilestone,
   onAddMember,
   onConfirmMeetingSuggestion,
   onRecommendMilestones,
@@ -53,6 +54,7 @@ function SidePanel({
             error={milestoneError}
             onAddMilestone={onAddMilestone}
             onEditMilestone={onEditMilestone}
+            onToggleMilestone={onToggleMilestone}
             onRecommendMilestones={onRecommendMilestones}
           />
           <MeetingSuggestionCard

@@ -18,6 +18,7 @@ function MilestoneCard({
   error,
   onAddMilestone,
   onEditMilestone,
+  onToggleMilestone,
   onRecommendMilestones,
 }) {
   return (
@@ -66,9 +67,15 @@ function MilestoneCard({
                   {milestone.title}
                 </span>
               </button>
-              <CheckIcon
-                className={`h-6 w-6 shrink-0 ${milestone.completed ? "text-gray-900" : "text-white"}`}
-              />
+              <button
+                type="button"
+                onClick={() => onToggleMilestone(milestone)}
+                className="flex size-8 shrink-0 cursor-pointer items-center justify-center"
+              >
+                <CheckIcon
+                  className={`h-6 w-6 ${milestone.completed ? "text-gray-900" : "text-white"}`}
+                />
+              </button>
             </div>
           ))}
         </div>

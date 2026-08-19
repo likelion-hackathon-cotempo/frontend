@@ -263,10 +263,7 @@ function HomeLayout() {
     }
 
     if (selectedMilestone) {
-      await updateMilestone(selectedMilestone.milestoneId, {
-        ...milestone,
-        completed: true,
-      });
+      await updateMilestone(selectedMilestone.milestoneId, milestone);
     } else {
       await createMilestone(milestone);
     }
@@ -279,6 +276,20 @@ function HomeLayout() {
 
     await removeMilestone(selectedMilestone.milestoneId);
     closeMilestoneModal();
+  };
+
+  const handleToggleMilestone = async (milestone) => {
+    try {
+      await updateMilestone(milestone.milestoneId, {
+        completed: !milestone.completed,
+      });
+    } catch (error) {
+      console.error(error);
+      alert(
+        error?.message ||
+          "마일스톤 완료 상태를 변경하지 못했습니다. 다시 시도해주세요.",
+      );
+    }
   };
 
   return (
@@ -333,6 +344,7 @@ function HomeLayout() {
               setSelectedMilestone(milestone);
               setIsAddMilestoneModalOpen(true);
             },
+            onToggleMilestone: handleToggleMilestone,
             onAddMember: () => {
               if (!activeTeamDetail?.inviteCode) {
                 alert("초대 코드를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -378,15 +390,16 @@ function HomeLayout() {
         }}
         onSubmit={handleJoinTeam}
       />
-      <AddMilestoneSelfModal
-        key={selectedMilestone?.milestoneId ?? "creation"}
-        isOpen={isAddMilestoneModalOpen}
-        variant={selectedMilestone ? "revision" : "creation"}
-        initialMilestone={selectedMilestone}
-        onClose={closeMilestoneModal}
-        onSubmit={handleSubmitMilestone}
-        onDelete={handleDeleteMilestone}
-      />
+      {isAddMilestoneModalOpen ? (
+        <AddMilestoneSelfModal
+          isOpen
+          variant={selectedMilestone ? "revision" : "creation"}
+          initialMilestone={selectedMilestone}
+          onClose={closeMilestoneModal}
+          onSubmit={handleSubmitMilestone}
+          onDelete={handleDeleteMilestone}
+        />
+      ) : null}
       <MeetingSuggestion
         isOpen={isMeetingSuggestionOpen}
         variant={meetingSuggestionVariant}
