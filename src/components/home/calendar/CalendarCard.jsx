@@ -8,8 +8,11 @@ import AddPersonalModal from "../../modal/AddPersonalModal.jsx";
 import useCalendarEvents from "./useCalendarEvents.js";
 import {
   createPersonalSchedule,
+  createTeamEvent,
   deletePersonalSchedule,
+  deleteTeamEvent,
   updatePersonalSchedule,
+  updateTeamEvent,
 } from "../../../api/calendar.js";
 
 const MONTH_LABELS = [
@@ -30,6 +33,7 @@ function CalendarCard({
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [selectedPersonalEvent, setSelectedPersonalEvent] = useState(null);
+  const [selectedTeamEvent, setSelectedTeamEvent] = useState(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -52,6 +56,7 @@ function CalendarCard({
   const closeEventModal = () => {
     setIsCreateEventOpen(false);
     setSelectedPersonalEvent(null);
+    setSelectedTeamEvent(null);
   };
   const handleSubmitPersonalSchedule = async (schedule) => {
     if (selectedPersonalEvent) {
@@ -70,6 +75,27 @@ function CalendarCard({
     closeEventModal();
     refresh();
   };
+  const handleSubmitTeamEvent = async (event) => {
+    if (activeTeamId == null) {
+      throw new Error("팀 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+    }
+
+    if (selectedTeamEvent) {
+      await updateTeamEvent(activeTeamId, selectedTeamEvent.id, event);
+    } else {
+      await createTeamEvent(activeTeamId, event);
+    }
+
+    closeEventModal();
+    refresh();
+  };
+  const handleDeleteTeamEvent = async () => {
+    if (activeTeamId == null || !selectedTeamEvent) return;
+
+    await deleteTeamEvent(activeTeamId, selectedTeamEvent.id);
+    closeEventModal();
+    refresh();
+  };
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -82,6 +108,7 @@ function CalendarCard({
         <CreateEventButton
           onClick={() => {
             setSelectedPersonalEvent(null);
+            setSelectedTeamEvent(null);
             setIsCreateEventOpen(true);
           }}
         />
@@ -105,6 +132,14 @@ function CalendarCard({
               }
             : undefined
         }
+        onTeamEventClick={
+          context === "team"
+            ? (event) => {
+                setSelectedTeamEvent(event);
+                setIsCreateEventOpen(true);
+              }
+            : undefined
+        }
       />
       {context === "me" ? (
         <AddPersonalModal
@@ -118,10 +153,14 @@ function CalendarCard({
         />
       ) : (
         <AddTeamEventModal
+          key={selectedTeamEvent?.id ?? "creation"}
           isOpen={isCreateEventOpen}
+          variant={selectedTeamEvent ? "revision" : "creation"}
+          initialEvent={selectedTeamEvent}
           members={teamMembers}
           onClose={closeEventModal}
-          onSubmit={closeEventModal}
+          onSubmit={handleSubmitTeamEvent}
+          onDelete={handleDeleteTeamEvent}
         />
       )}
     </div>

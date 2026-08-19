@@ -55,6 +55,13 @@ const getMemberInitials = (schedule, category) => {
     .filter(Boolean);
 };
 
+const getMemberIds = (schedule) =>
+  Array.isArray(schedule.members)
+    ? schedule.members
+        .map((member) => member?.memberId ?? member?.id)
+        .filter((memberId) => memberId != null)
+    : [];
+
 const formatDate = (date) =>
   `${String(date.getFullYear()).slice(-2)}. ${pad(date.getMonth() + 1)}. ${pad(date.getDate())}`;
 
@@ -85,7 +92,10 @@ const toCalendarEvent = (schedule) => {
     milestone: "p",
     holiday: "green",
   };
-  const id = schedule.id ?? schedule.personalScheduleId;
+  const id =
+    category === "team"
+      ? (schedule.teamEventId ?? schedule.eventId ?? schedule.id)
+      : (schedule.personalScheduleId ?? schedule.id);
 
   return {
     key: [schedule.type, id, startDate.toISOString()].join(":"),
@@ -101,6 +111,7 @@ const toCalendarEvent = (schedule) => {
     date: formatDate(startDate),
     time: getTimeLabel(schedule, startDate, endDate),
     members: getMemberInitials(schedule, category),
+    memberIds: getMemberIds(schedule),
     startDate,
     endDate,
   };

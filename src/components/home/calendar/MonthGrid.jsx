@@ -24,7 +24,14 @@ function getCalendarWeeks(year, month) {
   return weeks;
 }
 
-function MonthGrid({ year, month, events, todayDay, onPersonalEventClick }) {
+function MonthGrid({
+  year,
+  month,
+  events,
+  todayDay,
+  onPersonalEventClick,
+  onTeamEventClick,
+}) {
   const weeks = getCalendarWeeks(year, month);
 
   return (
@@ -42,16 +49,20 @@ function MonthGrid({ year, month, events, todayDay, onPersonalEventClick }) {
                   <DateBadge day={day} isToday={day === todayDay} />
                   {(events[day] ?? []).map((event) => {
                     const { key, ...eventProps } = event;
+                    const handleEventClick =
+                      event.category === "personal"
+                        ? onPersonalEventClick
+                        : event.category === "team"
+                          ? onTeamEventClick
+                          : undefined;
 
                     return (
                       <EventChip
                         key={key}
                         {...eventProps}
                         onClick={
-                          onPersonalEventClick &&
-                          event.category === "personal" &&
-                          event.id != null
-                            ? () => onPersonalEventClick?.(event)
+                          handleEventClick && event.id != null
+                            ? () => handleEventClick(event)
                             : undefined
                         }
                       />

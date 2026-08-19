@@ -30,6 +30,15 @@ export const updatePersonalSchedule = (personalScheduleId, body) =>
 export const deletePersonalSchedule = (personalScheduleId) =>
   client.delete(`/api/v1/schedules/${personalScheduleId}`);
 
+export const createTeamEvent = (teamId, body) =>
+  client.post(`/api/v1/teams/${teamId}/events`, body);
+
+export const updateTeamEvent = (teamId, eventId, body) =>
+  client.patch(`/api/v1/teams/${teamId}/events/${eventId}`, body);
+
+export const deleteTeamEvent = (teamId, eventId) =>
+  client.delete(`/api/v1/teams/${teamId}/events/${eventId}`);
+
 export const recommendMeetingTimes = (teamId, body, config) =>
   client.post(
     `/api/v1/teams/${teamId}/events/recommendations`,
