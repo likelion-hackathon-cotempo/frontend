@@ -11,6 +11,7 @@ import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
+import { createTeam } from "../../api/team.js";
 import { useAuth } from "../../auth/AuthContext.js";
 
 const MOCK_CONTEXTS = [
@@ -55,6 +56,7 @@ function HomeLayout() {
   const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
     useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
+  const [createdTeamInviteCode, setCreatedTeamInviteCode] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
@@ -85,6 +87,15 @@ function HomeLayout() {
       alert(error?.message || "로그아웃에 실패했습니다. 다시 시도해주세요.");
       setIsLoggingOut(false);
     }
+  };
+
+  const handleCreateTeam = async (name) => {
+    const createdTeam = await createTeam(name);
+
+    setCreatedTeamInviteCode(createdTeam.inviteCode);
+    setIsAddTeamModalOpen(false);
+    setJoinTeamModalVariant("share");
+    setIsJoinTeamModalOpen(true);
   };
 
   return (
@@ -125,6 +136,7 @@ function HomeLayout() {
             teams,
             onAddMilestone: () => setIsAddMilestoneModalOpen(true),
             onAddMember: () => {
+              setCreatedTeamInviteCode("");
               setJoinTeamModalVariant("share");
               setIsJoinTeamModalOpen(true);
             },
@@ -142,15 +154,12 @@ function HomeLayout() {
       <AddTeamModal
         isOpen={isAddTeamModalOpen}
         onClose={() => setIsAddTeamModalOpen(false)}
-        onSubmit={() => {
-          setIsAddTeamModalOpen(false);
-          setJoinTeamModalVariant("share");
-          setIsJoinTeamModalOpen(true);
-        }}
+        onSubmit={handleCreateTeam}
       />
       <JoinTeamModal
         isOpen={isJoinTeamModalOpen}
         variant={joinTeamModalVariant}
+        inviteCode={createdTeamInviteCode || undefined}
         onClose={() => setIsJoinTeamModalOpen(false)}
         onSubmit={() => {
           setIsJoinTeamModalOpen(false);
