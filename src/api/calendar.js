@@ -10,10 +10,11 @@ const withCalendarParams = (year, month, config = {}) => ({
 });
 
 export const getPersonalCalendar = (year, month, config) =>
-  client.get(
-    "/api/v1/dashboard",
-    withCalendarParams(year, month, config),
-  );
+  client.get("/api/v1/dashboard", withCalendarParams(year, month, config));
+
+// origin/main에서 사용하던 이름도 유지해 기존 호출부와 호환한다.
+export const getDashboard = (year, month, config) =>
+  getPersonalCalendar(year, month, config);
 
 export const getTeamCalendar = (teamId, year, month, config) =>
   client.get(

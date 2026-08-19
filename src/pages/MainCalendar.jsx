@@ -8,7 +8,9 @@ function MainCalendar() {
     teams,
     activeTeamId,
     teamDetail,
+    teamId,
   } = useOutletContext();
+  const selectedTeamId = activeTeamId ?? teamId;
 
   return (
     <main className="min-w-0 flex-1">
@@ -16,7 +18,7 @@ function MainCalendar() {
         context={context}
         isContextReady={isCalendarContextReady}
         teams={teams}
-        activeTeamId={activeTeamId}
+        activeTeamId={selectedTeamId}
         teamDetail={teamDetail}
       />
     </main>

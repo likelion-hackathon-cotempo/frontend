@@ -17,20 +17,20 @@ import {
   getMyTeams,
   getTeamDetail,
   joinTeam,
-} from "../../api/team.js";
+} from "../../api/teams.js";
 import { useAuth } from "../../auth/AuthContext.js";
 
 const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
 
 const toTeamContext = ({ teamId, name, myRole }) => {
-  const teamName = name.trim();
+  const teamName = String(name ?? "").trim();
 
   return {
     id: `team-${teamId}`,
     teamId,
     type: "team",
-    label: teamName,
-    initial: Array.from(teamName)[0]?.toUpperCase() ?? "",
+    label: teamName.length > 8 ? `${teamName.slice(0, 6)}...` : teamName,
+    initial: Array.from(teamName)[0]?.toUpperCase() ?? "?",
     teamName,
     myRole,
   };
@@ -329,6 +329,7 @@ function HomeLayout() {
           context={{
             context: activeContext.type,
             isCalendarContextReady: activeId !== null,
+            teamId: activeTeamId,
             teams,
             activeTeamId,
             teamDetail: activeTeamDetail,

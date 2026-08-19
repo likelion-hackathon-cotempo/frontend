@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPersonalCalendar, getTeamCalendar } from "../../../api/calendar.js";
+import { isEventVisibleForContext } from "./mapCalendarEvents.js";
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -202,8 +203,9 @@ function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
       schedules
         .map(toCalendarEvent)
         .filter(Boolean)
+        .filter((event) => isEventVisibleForContext(context, event))
         .sort((left, right) => left.startDate - right.startDate),
-    [schedules],
+    [context, schedules],
   );
 
   const eventsByDay = useMemo(

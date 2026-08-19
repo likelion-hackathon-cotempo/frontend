@@ -13,6 +13,7 @@ function Main() {
     milestones,
     isMilestonesLoading,
     milestoneError,
+    teamId,
     onAddMilestone,
     onEditMilestone,
     onToggleMilestone,
@@ -20,6 +21,7 @@ function Main() {
     onConfirmMeetingSuggestion,
     onRecommendMilestones,
   } = useOutletContext();
+  const selectedTeamId = activeTeamId ?? teamId;
 
   return (
     <>
@@ -27,7 +29,7 @@ function Main() {
         <CalendarCard
           context={context}
           isContextReady={isCalendarContextReady}
-          activeTeamId={activeTeamId}
+          activeTeamId={selectedTeamId}
           teamDetail={teamDetail}
         />
       </main>
