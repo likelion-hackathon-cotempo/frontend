@@ -8,3 +8,6 @@ export const getTeamDetail = (teamId, config) =>
 
 export const createTeam = (name) =>
   client.post("/api/v1/teams", { name });
+
+export const joinTeam = (inviteCode, position) =>
+  client.post("/api/v1/teams/join", { inviteCode, position });

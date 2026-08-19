@@ -33,7 +33,7 @@ function SidePanel({
     name: member.name,
     subtitle: [
       COUNTRY_LABELS[member.country] ?? member.country,
-      member.role ?? member.position,
+      member.position ?? member.role,
     ]
       .filter(Boolean)
       .join(" · "),

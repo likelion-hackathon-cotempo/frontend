@@ -11,7 +11,12 @@ import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
-import { createTeam, getMyTeams, getTeamDetail } from "../../api/team.js";
+import {
+  createTeam,
+  getMyTeams,
+  getTeamDetail,
+  joinTeam,
+} from "../../api/team.js";
 import { useAuth } from "../../auth/AuthContext.js";
 
 const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
@@ -57,6 +62,7 @@ function HomeLayout() {
   const [meetingSuggestionVariant, setMeetingSuggestionVariant] =
     useState("input");
   const [joinTeamModalVariant, setJoinTeamModalVariant] = useState("input");
+  const [joinInviteCode, setJoinInviteCode] = useState("");
   const [createdTeamInviteCode, setCreatedTeamInviteCode] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -209,6 +215,28 @@ function HomeLayout() {
     setIsJoinTeamModalOpen(true);
   };
 
+  const handleJoinTeam = async (position) => {
+    const joinedTeam = await joinTeam(joinInviteCode, position);
+    const joinedTeamContext = toTeamContext({
+      ...joinedTeam,
+      myRole: joinedTeam.myRole ?? "MEMBER",
+    });
+
+    setTeamContexts((currentContexts) => [
+      ...currentContexts.filter(
+        (context) => context.teamId !== joinedTeamContext.teamId,
+      ),
+      joinedTeamContext,
+    ]);
+    setActiveId(joinedTeamContext.id);
+    setJoinInviteCode("");
+    setIsJoinTeamRoleModalOpen(false);
+
+    if (location.pathname === "/main/mypage") {
+      navigate("/main");
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#f3f4ff] px-10 py-6">
       <BrandLogo />
@@ -229,6 +257,7 @@ function HomeLayout() {
               }}
               onJoin={() => {
                 setIsTeamActionMenuOpen(false);
+                setJoinInviteCode("");
                 setJoinTeamModalVariant("input");
                 setIsJoinTeamModalOpen(true);
               }}
@@ -280,15 +309,19 @@ function HomeLayout() {
         variant={joinTeamModalVariant}
         inviteCode={createdTeamInviteCode || undefined}
         onClose={() => setIsJoinTeamModalOpen(false)}
-        onSubmit={() => {
+        onSubmit={(inviteCode) => {
+          setJoinInviteCode(inviteCode);
           setIsJoinTeamModalOpen(false);
           setIsJoinTeamRoleModalOpen(true);
         }}
       />
       <JoinTeamRoleModal
         isOpen={isJoinTeamRoleModalOpen}
-        onClose={() => setIsJoinTeamRoleModalOpen(false)}
-        onSubmit={() => setIsJoinTeamRoleModalOpen(false)}
+        onClose={() => {
+          setJoinInviteCode("");
+          setIsJoinTeamRoleModalOpen(false);
+        }}
+        onSubmit={handleJoinTeam}
       />
       <AddMilestoneSelfModal
         isOpen={isAddMilestoneModalOpen}

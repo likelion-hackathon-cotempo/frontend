@@ -4,15 +4,17 @@ import ModalButton from "./ModalButton.jsx";
 import Textfield from "./Textfield.jsx";
 
 function JoinTeamRoleModal({ isOpen, onClose, onSubmit }) {
-  const [role, setRole] = useState("");
-  const isRoleEntered = role.trim().length > 0;
+  const [position, setPosition] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isPositionEntered = position.trim().length > 0;
+  const canSubmit = isPositionEntered && !isSubmitting;
 
   useEffect(() => {
     if (!isOpen) return undefined;
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        setRole("");
+        setPosition("");
         onClose?.();
       }
     };
@@ -24,17 +26,25 @@ function JoinTeamRoleModal({ isOpen, onClose, onSubmit }) {
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setRole("");
+    setPosition("");
     onClose?.();
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!isRoleEntered) return;
+    if (!canSubmit) return;
 
-    const submittedRole = role.trim();
-    setRole("");
-    onSubmit?.(submittedRole);
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit?.(position.trim());
+      setPosition("");
+    } catch (error) {
+      console.error(error);
+      alert(error?.message || "팀 참여에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,19 +68,20 @@ function JoinTeamRoleModal({ isOpen, onClose, onSubmit }) {
 
           <div className="flex flex-col items-start gap-8">
             <Textfield
-              value={role}
-              onChange={(event) => setRole(event.target.value)}
+              value={position}
+              onChange={(event) => setPosition(event.target.value)}
               placeholder="Enter your role"
+              disabled={isSubmitting}
               className="w-full"
             />
 
             <ModalButton
               type="submit"
               size="big"
-              variant={isRoleEntered ? "on" : "off"}
-              disabled={!isRoleEntered}
+              variant={canSubmit ? "on" : "off"}
+              disabled={!canSubmit}
             >
-              Join
+              {isSubmitting ? "Joining..." : "Join"}
             </ModalButton>
           </div>
         </form>
