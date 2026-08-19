@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import IconRail from "./IconRail.jsx";
 import SubSideNav from "./SubSideNav.jsx";
@@ -11,38 +11,37 @@ import MeetingSuggestion from "../modal/MeetingSuggestion.jsx";
 import MilestoneSuggestion from "../modal/MilestoneSuggestion.jsx";
 import BrandLogo from "../common/BrandLogo.jsx";
 import { logout } from "../../api/auth.js";
-import { createTeam } from "../../api/team.js";
+import { createTeam, getMyTeams } from "../../api/team.js";
 import { useAuth } from "../../auth/AuthContext.js";
 
-const MOCK_CONTEXTS = [
-  { id: "me", type: "me", label: "MY" },
-  {
-    id: "team-1",
+const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
+
+const toTeamContext = ({ teamId, name, myRole }) => {
+  const teamName = name.trim();
+
+  return {
+    id: `team-${teamId}`,
+    teamId,
     type: "team",
-    label: "Culture...",
-    initial: "C",
-    teamName: "Culture Land",
-  },
-  {
-    id: "team-2",
-    type: "team",
-    label: "Teamn...",
-    initial: "T",
-    teamName: "Teamname",
-  },
-];
+    label: teamName,
+    initial: Array.from(teamName)[0]?.toUpperCase() ?? "",
+    teamName,
+    myRole,
+  };
+};
 
 function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setIsAuthenticated } = useAuth();
-  const requestedContextId = location.state?.activeId;
-  const initialActiveId = MOCK_CONTEXTS.some((context) => context.id === requestedContextId)
-    ? requestedContextId
-    : location.pathname === "/main/mypage"
-      ? "me"
-      : "team-1";
-  const [activeId, setActiveId] = useState(initialActiveId);
+  const [initialSelection] = useState(() => ({
+    isMyPage: location.pathname === "/main/mypage",
+    requestedContextId: location.state?.activeId,
+  }));
+  const [teamContexts, setTeamContexts] = useState([]);
+  const [activeId, setActiveId] = useState(
+    initialSelection.isMyPage ? "me" : null,
+  );
   const [isTeamActionMenuOpen, setIsTeamActionMenuOpen] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isJoinTeamModalOpen, setIsJoinTeamModalOpen] = useState(false);
@@ -59,11 +58,63 @@ function HomeLayout() {
   const [createdTeamInviteCode, setCreatedTeamInviteCode] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const activeContext = MOCK_CONTEXTS.find((ctx) => ctx.id === activeId);
-  const teams = MOCK_CONTEXTS.filter((ctx) => ctx.type === "team").map((ctx) => ({
-    id: ctx.id,
-    name: ctx.teamName,
+  const contexts = [MY_CONTEXT, ...teamContexts];
+  const activeContext =
+    contexts.find((context) => context.id === activeId) ?? MY_CONTEXT;
+  const teams = teamContexts.map((context) => ({
+    id: context.teamId,
+    name: context.teamName,
+    myRole: context.myRole,
   }));
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadMyTeams = async () => {
+      try {
+        const participatingTeams = await getMyTeams({
+          signal: controller.signal,
+        });
+        const nextTeamContexts = participatingTeams.map(toTeamContext);
+
+        setTeamContexts(nextTeamContexts);
+        setActiveId((currentActiveId) => {
+          if (initialSelection.isMyPage) return "me";
+
+          const requestedContext = nextTeamContexts.find(
+            (context) =>
+              context.id === String(initialSelection.requestedContextId) ||
+              String(context.teamId) ===
+                String(initialSelection.requestedContextId),
+          );
+
+          if (requestedContext) return requestedContext.id;
+          if (
+            nextTeamContexts.some(
+              (context) => context.id === currentActiveId,
+            )
+          ) {
+            return currentActiveId;
+          }
+
+          return nextTeamContexts[0]?.id ?? "me";
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        console.error(error);
+        alert(
+          error?.message ||
+            "참여 중인 팀 목록을 불러오지 못했습니다. 다시 시도해주세요.",
+        );
+        setActiveId((currentActiveId) => currentActiveId ?? "me");
+      }
+    };
+
+    loadMyTeams();
+
+    return () => controller.abort();
+  }, [initialSelection]);
 
   const handleContextSelect = (contextId) => {
     setActiveId(contextId);
@@ -91,7 +142,17 @@ function HomeLayout() {
 
   const handleCreateTeam = async (name) => {
     const createdTeam = await createTeam(name);
+    const createdTeamContext = toTeamContext({
+      ...createdTeam,
+      myRole: "OWNER",
+    });
 
+    setTeamContexts((currentContexts) => [
+      ...currentContexts.filter(
+        (context) => context.teamId !== createdTeamContext.teamId,
+      ),
+      createdTeamContext,
+    ]);
     setCreatedTeamInviteCode(createdTeam.inviteCode);
     setIsAddTeamModalOpen(false);
     setJoinTeamModalVariant("share");
@@ -104,7 +165,7 @@ function HomeLayout() {
       <div className="flex flex-1 items-stretch gap-6">
         <div className="relative h-fit shrink-0">
           <IconRail
-            contexts={MOCK_CONTEXTS}
+            contexts={contexts}
             activeId={activeId}
             onSelect={handleContextSelect}
             onAddTeam={() => setIsTeamActionMenuOpen((isOpen) => !isOpen)}
