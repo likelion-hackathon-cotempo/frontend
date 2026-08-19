@@ -80,13 +80,13 @@ function HomeLayout() {
   }));
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isActive = true;
 
     const loadMyTeams = async () => {
       try {
-        const participatingTeams = await getMyTeams({
-          signal: controller.signal,
-        });
+        const participatingTeams = await getMyTeams();
+        if (!isActive) return;
+
         const nextTeamContexts = participatingTeams.map(toTeamContext);
 
         setTeamContexts(nextTeamContexts);
@@ -112,7 +112,7 @@ function HomeLayout() {
           return nextTeamContexts[0]?.id ?? "me";
         });
       } catch (error) {
-        if (controller.signal.aborted) return;
+        if (!isActive) return;
 
         console.error(error);
         alert(
@@ -125,7 +125,9 @@ function HomeLayout() {
 
     loadMyTeams();
 
-    return () => controller.abort();
+    return () => {
+      isActive = false;
+    };
   }, [initialSelection]);
 
   useEffect(() => {
@@ -273,6 +275,7 @@ function HomeLayout() {
         <Outlet
           context={{
             context: activeContext.type,
+            isCalendarContextReady: activeId !== null,
             teams,
             activeTeamId,
             teamDetail: activeTeamDetail,

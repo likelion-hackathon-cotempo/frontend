@@ -15,7 +15,7 @@ function AvatarStack({ members }) {
         const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
         return (
           <div
-            key={member}
+            key={`${member}-${index}`}
             className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-[16.1px] font-semibold text-white drop-shadow-[0_0_4.5px_rgba(52,56,65,0.1)]"
             style={{
               marginLeft: index === 0 ? 0 : -18,

@@ -5,6 +5,8 @@ import SidePanel from "../components/home/side-panel/SidePanel.jsx";
 function Main() {
   const {
     context,
+    isCalendarContextReady,
+    activeTeamId,
     teams,
     teamDetail,
     isTeamDetailLoading,
@@ -17,7 +19,12 @@ function Main() {
   return (
     <>
       <main className="min-w-0 flex-1">
-        <CalendarCard context={context} />
+        <CalendarCard
+          context={context}
+          isContextReady={isCalendarContextReady}
+          activeTeamId={activeTeamId}
+          teamDetail={teamDetail}
+        />
       </main>
       <aside className="w-[325px] shrink-0 overflow-y-auto">
         <SidePanel

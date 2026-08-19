@@ -40,9 +40,11 @@ function MonthGrid({ year, month, events, todayDay }) {
               {day && (
                 <>
                   <DateBadge day={day} isToday={day === todayDay} />
-                  {(events[day] ?? []).map((event, eventIndex) => (
-                    <EventChip key={eventIndex} {...event} />
-                  ))}
+                  {(events[day] ?? []).map((event) => {
+                    const { key, ...eventProps } = event;
+
+                    return <EventChip key={key} {...eventProps} />;
+                  })}
                 </>
               )}
             </div>

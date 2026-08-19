@@ -1,23 +1,33 @@
 import UpcomingEventCard from "./UpcomingEventCard.jsx";
 
-const MOCK_UPCOMING_EVENTS = [
-  { id: 1, title: "Interview", date: "26. 08. 12", time: "13:00 - 15:00", members: ["J"] },
-  { id: 2, title: "Weekly Meeting", date: "26. 08. 12", time: "13:00 - 15:00", members: ["J", "S", "A", "L"] },
-  { id: 3, title: "Weekly Meeting", date: "26. 08. 12", time: "13:00 - 15:00", members: ["J", "S", "A", "L"] },
-];
+function UpcomingEventsRow({ events, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="flex h-[122px] items-center text-body2 text-gray-500">
+        Loading schedules...
+      </div>
+    );
+  }
 
-function UpcomingEventsRow() {
+  if (events.length === 0) {
+    return (
+      <div className="flex h-[122px] items-center text-body2 text-gray-500">
+        No schedules this month.
+      </div>
+    );
+  }
+
   return (
     <div
-      className="flex gap-3 overflow-x-auto"
+      className="flex min-w-0 gap-3 overflow-x-auto pb-1"
       style={{
         maskImage: "linear-gradient(to right, black 85%, transparent 100%)",
         WebkitMaskImage: "linear-gradient(to right, black 85%, transparent 100%)",
       }}
     >
-      {MOCK_UPCOMING_EVENTS.map((event) => (
+      {events.map((event) => (
         <UpcomingEventCard
-          key={event.id}
+          key={event.key}
           title={event.title}
           date={event.date}
           time={event.time}

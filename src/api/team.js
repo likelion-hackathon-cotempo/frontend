@@ -1,7 +1,16 @@
 import client from "./client";
 
-export const getMyTeams = (config) =>
-  client.get("/api/v1/teams", config);
+let myTeamsRequest = null;
+
+export const getMyTeams = () => {
+  if (!myTeamsRequest) {
+    myTeamsRequest = client.get("/api/v1/teams").finally(() => {
+      myTeamsRequest = null;
+    });
+  }
+
+  return myTeamsRequest;
+};
 
 export const getTeamDetail = (teamId, config) =>
   client.get(`/api/v1/teams/${teamId}`, config);
