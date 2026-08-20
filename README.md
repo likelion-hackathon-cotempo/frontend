@@ -1,16 +1,22 @@
-# React + Vite
+# Cotempo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## 📁 주요 프로젝트 구조
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```text
+src/
+├── api/                    # 서버 API 요청 및 통신 설정
+├── assets/                 # 이미지, 로고, SVG 등 정적 파일
+├── auth/                   # 인증 상태 관리 및 접근 제어
+├── components/
+│   ├── common/             # 전역 공통 컴포넌트
+│   ├── home/               # 홈 및 캘린더 관련 컴포넌트
+│   ├── icons/              # 아이콘 컴포넌트
+│   ├── modal/              # 모달 및 입력 컴포넌트
+│   └── mypage/             # 마이페이지 관련 컴포넌트
+├── pages/                  # 라우팅 단위 페이지
+├── utils/                  # 공통 유틸리티 함수
+├── App.jsx                 # 라우팅 및 애플리케이션 구성
+├── main.jsx                # 애플리케이션 진입점
+└── index.css               # 전역 스타일(tailwind css)
+```
