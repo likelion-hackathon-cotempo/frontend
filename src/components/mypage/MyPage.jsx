@@ -4,10 +4,12 @@ import chevronDown from "../../assets/icons/chevron-down.svg";
 import chevronUp from "../../assets/icons/chevron-up.svg";
 import checkIcon from "../../assets/icons/check.svg";
 import { getMe, updateMe } from "../../api/auth.js";
+import { useAuth } from "../../auth/AuthContext.js";
 
 const COUNTRIES = ["KR", "VN", "US"];
 
 function MyPage() {
+  const { setCurrentUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState("KR");
@@ -32,6 +34,12 @@ function MyPage() {
 
     try {
       await updateMe({ name, country, timezone });
+      setCurrentUser((current) => ({
+        ...current,
+        name,
+        country,
+        timezone,
+      }));
       alert("저장되었습니다");
     } catch (err) {
       console.error(err);

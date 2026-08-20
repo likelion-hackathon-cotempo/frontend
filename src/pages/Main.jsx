@@ -1,8 +1,11 @@
 import { useOutletContext } from "react-router-dom";
 import CalendarCard from "../components/home/calendar/CalendarCard.jsx";
 import SidePanel from "../components/home/side-panel/SidePanel.jsx";
+import { useAuth } from "../auth/AuthContext.js";
+import { getMemberTimeZone } from "../utils/dateTime.js";
 
 function Main() {
+  const { currentUser } = useAuth();
   const {
     context,
     isCalendarContextReady,
@@ -48,6 +51,7 @@ function Main() {
           onAddMember={onAddMember}
           onConfirmMeetingSuggestion={onConfirmMeetingSuggestion}
           onRecommendMilestones={onRecommendMilestones}
+          timeZone={getMemberTimeZone(currentUser)}
         />
       </aside>
     </>

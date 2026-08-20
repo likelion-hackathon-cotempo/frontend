@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../api/auth";
+import { getMe, login } from "../api/auth";
 import BrandLogo from "../components/common/BrandLogo.jsx";
 import { useAuth } from "../auth/AuthContext.js";
 
 function Login() {
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useAuth();
+  const { setCurrentUser, setIsAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,6 +14,8 @@ function Login() {
     e.preventDefault();
     try {
       await login({ email, password });
+      const member = await getMe();
+      setCurrentUser(member);
       setIsAuthenticated(true);
       navigate("/main", { replace: true });
     } catch (err) {

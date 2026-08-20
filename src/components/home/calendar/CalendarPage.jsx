@@ -15,6 +15,11 @@ import {
   updatePersonalSchedule,
   updateTeamEvent,
 } from "../../../api/calendar.js";
+import { useAuth } from "../../../auth/AuthContext.js";
+import {
+  getMemberTimeZone,
+  getZonedDateTimeParts,
+} from "../../../utils/dateTime.js";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -68,22 +73,27 @@ function CalendarPage({
   activeTeamId,
   teamDetail,
 }) {
-  const today = new Date();
-  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const { currentUser } = useAuth();
+  const timeZone = getMemberTimeZone(currentUser);
+  const today = getZonedDateTimeParts(new Date(), timeZone);
+  const [viewDate, setViewDate] = useState(() => ({
+    year: today.year,
+    month: today.month - 1,
+  }));
   const [activeFilters, setActiveFilters] = useState([]);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [selectedPersonalEvent, setSelectedPersonalEvent] = useState(null);
   const [selectedTeamEvent, setSelectedTeamEvent] = useState(null);
 
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+  const { year, month } = viewDate;
+  const isCurrentMonth = year === today.year && month === today.month - 1;
   const { events, eventsByDay, isLoading, error, refresh } = useCalendarEvents({
     enabled: isContextReady,
     context,
     teamId: activeTeamId,
     year,
     month: month + 1,
+    timeZone,
   });
   const teamMembers = (teamDetail?.members ?? []).map((member) => ({
     id: member.memberId,
@@ -91,8 +101,12 @@ function CalendarPage({
     name: member.name,
   }));
 
-  const goToPrevMonth = () => setViewDate(new Date(year, month - 1, 1));
-  const goToNextMonth = () => setViewDate(new Date(year, month + 1, 1));
+  const changeMonth = (offset) => {
+    const date = new Date(Date.UTC(year, month + offset, 1));
+    setViewDate({ year: date.getUTCFullYear(), month: date.getUTCMonth() });
+  };
+  const goToPrevMonth = () => changeMonth(-1);
+  const goToNextMonth = () => changeMonth(1);
   const closeEventModal = () => {
     setIsCreateEventOpen(false);
     setSelectedPersonalEvent(null);
@@ -181,7 +195,7 @@ function CalendarPage({
         year={year}
         month={month}
         events={filterEvents(eventsByDay, visibleActiveFilters)}
-        todayDay={isCurrentMonth ? today.getDate() : null}
+        todayDay={isCurrentMonth ? today.day : null}
         onPersonalEventClick={
           context === "me"
             ? (event) => {
@@ -205,6 +219,7 @@ function CalendarPage({
           isOpen={isCreateEventOpen}
           variant={selectedPersonalEvent ? "revision" : "creation"}
           initialSchedule={selectedPersonalEvent}
+          timeZone={timeZone}
           onClose={closeEventModal}
           onSubmit={handleSubmitPersonalSchedule}
           onDelete={handleDeletePersonalSchedule}
@@ -216,6 +231,7 @@ function CalendarPage({
           variant={selectedTeamEvent ? "revision" : "creation"}
           initialEvent={selectedTeamEvent}
           members={teamMembers}
+          timeZone={timeZone}
           onClose={closeEventModal}
           onSubmit={handleSubmitTeamEvent}
           onDelete={handleDeleteTeamEvent}

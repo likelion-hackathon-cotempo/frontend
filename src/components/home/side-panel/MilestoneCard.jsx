@@ -1,16 +1,7 @@
 import { CheckIcon, PlusIcon } from "../../icons/index.jsx";
 import SidePanelCard from "./SidePanelCard.jsx";
 import ActionButton from "./ActionButton.jsx";
-
-const pad = (value) => String(value).padStart(2, "0");
-
-const formatDueDate = (dueDateTime) => {
-  const dueDate = new Date(dueDateTime);
-
-  if (Number.isNaN(dueDate.getTime())) return "";
-
-  return `${pad(dueDate.getMonth() + 1)}. ${pad(dueDate.getDate())} · ${pad(dueDate.getHours())}:${pad(dueDate.getMinutes())}`;
-};
+import { formatZonedMonthDayTime } from "../../../utils/dateTime.js";
 
 function MilestoneCard({
   milestones,
@@ -20,6 +11,7 @@ function MilestoneCard({
   onEditMilestone,
   onToggleMilestone,
   onRecommendMilestones,
+  timeZone,
 }) {
   return (
     <SidePanelCard
@@ -61,7 +53,7 @@ function MilestoneCard({
                 className="min-w-0 flex-1 cursor-pointer text-left text-gray-900"
               >
                 <span className="block text-body3">
-                  {formatDueDate(milestone.dueDateTime)}
+                  {formatZonedMonthDayTime(milestone.dueDateTime, timeZone)}
                 </span>
                 <span className="mt-1 block truncate text-subtitle3">
                   {milestone.title}
