@@ -5,17 +5,30 @@ import { AuthContext } from "./AuthContext.js";
 function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     getMe()
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false))
+      .then((member) => {
+        setCurrentUser(member);
+        setIsAuthenticated(true);
+      })
+      .catch(() => {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isLoading, setIsAuthenticated }}
+      value={{
+        isAuthenticated,
+        isLoading,
+        currentUser,
+        setCurrentUser,
+        setIsAuthenticated,
+      }}
     >
       {children}
     </AuthContext.Provider>

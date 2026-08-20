@@ -5,48 +5,42 @@ import Meridiem from "./Meridiem.jsx";
 import ModalButton from "./ModalButton.jsx";
 import Textfield from "./Textfield.jsx";
 import TimeInput from "./TimeInput.jsx";
+import {
+  getZonedDateTimeParts,
+  toDateKey,
+  zonedDateTimeToUtcIso,
+} from "../../utils/dateTime.js";
 
 const pad = (value) => String(value).padStart(2, "0");
 
-const getFormValues = (milestone) => {
+const getFormValues = (milestone, timeZone) => {
   const dueDate = milestone?.dueDateTime
     ? new Date(milestone.dueDateTime)
     : new Date();
-  const hour = dueDate.getHours();
+  const parts = getZonedDateTimeParts(dueDate, timeZone);
+  const { hour } = parts;
 
   return {
     title: milestone?.title ?? "",
-    date: `${dueDate.getFullYear()}-${pad(dueDate.getMonth() + 1)}-${pad(dueDate.getDate())}`,
+    date: toDateKey(parts),
     meridiem: hour >= 12 ? "PM" : "AM",
     time: {
       hour: pad(hour % 12 || 12),
-      minute: pad(dueDate.getMinutes()),
+      minute: pad(parts.minute),
     },
   };
-};
-
-const toDueDateTime = (date, time, meridiem) => {
-  const [year, month, day] = date.split("-").map(Number);
-  const hour = (Number(time.hour) % 12) + (meridiem === "PM" ? 12 : 0);
-
-  return new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    Number(time.minute),
-  ).toISOString();
 };
 
 function AddMilestoneSelfModal({
   isOpen,
   variant = "creation",
   initialMilestone,
+  timeZone,
   onClose,
   onSubmit,
   onDelete,
 }) {
-  const initialValues = getFormValues(initialMilestone);
+  const initialValues = getFormValues(initialMilestone, timeZone);
   const [title, setTitle] = useState(initialValues.title);
   const [date, setDate] = useState(initialValues.date);
   const [meridiem, setMeridiem] = useState(initialValues.meridiem);
@@ -60,13 +54,13 @@ function AddMilestoneSelfModal({
   );
 
   const resetForm = useCallback(() => {
-    const values = getFormValues(initialMilestone);
+    const values = getFormValues(initialMilestone, timeZone);
     setTitle(values.title);
     setDate(values.date);
     setMeridiem(values.meridiem);
     setTime(values.time);
     setSubmitError("");
-  }, [initialMilestone]);
+  }, [initialMilestone, timeZone]);
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return;
@@ -97,7 +91,12 @@ function AddMilestoneSelfModal({
     try {
       await onSubmit?.({
         title: title.trim(),
-        dueDateTime: toDueDateTime(date, time, meridiem),
+        dueDateTime: zonedDateTimeToUtcIso(
+          date,
+          time,
+          meridiem,
+          timeZone,
+        ),
       });
     } catch (error) {
       console.error(error);

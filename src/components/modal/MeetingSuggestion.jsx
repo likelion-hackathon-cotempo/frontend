@@ -5,6 +5,11 @@ import ModalButton from "./ModalButton.jsx";
 import RadioButton from "./RadioButton.jsx";
 import SuggestionCard from "./SuggestionCard.jsx";
 import { recommendMeetingTimes } from "../../api/calendar.js";
+import {
+  getZonedDateKey,
+  normalizeTimeZone,
+  zonedDateTimeToUtcIso,
+} from "../../utils/dateTime.js";
 
 const MEETING_DURATIONS = [
   { label: "30 min", value: 30 },
@@ -13,42 +18,30 @@ const MEETING_DURATIONS = [
   { label: "2 hr", value: 120 },
 ];
 
-const getCurrentDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+const toUtcDateTime = (date, timeZone, isEndOfDay = false) =>
+  zonedDateTimeToUtcIso(
+    date,
+    isEndOfDay
+      ? { hour: "11", minute: "59", second: 59, millisecond: 999 }
+      : { hour: "12", minute: "00" },
+    isEndOfDay ? "PM" : "AM",
+    timeZone,
+  );
 
-  return `${year}-${month}-${day}`;
-};
-
-const toUtcDateTime = (date, isEndOfDay = false) => {
-  const [year, month, day] = date.split("-").map(Number);
-
-  return new Date(
-    year,
-    month - 1,
-    day,
-    isEndOfDay ? 23 : 0,
-    isEndOfDay ? 59 : 0,
-    isEndOfDay ? 59 : 0,
-    isEndOfDay ? 999 : 0,
-  ).toISOString();
-};
-
-const meetingTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: "Asia/Seoul",
-  weekday: "long",
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  hour12: true,
-});
-
-const formatMeetingTime = (dateTime) => {
+const formatMeetingTime = (dateTime, timeZone) => {
   const date = new Date(dateTime);
   if (Number.isNaN(date.getTime())) return dateTime;
+
+  const normalizedTimeZone = normalizeTimeZone(timeZone);
+  const meetingTimeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: normalizedTimeZone,
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   const parts = Object.fromEntries(
     meetingTimeFormatter
@@ -57,13 +50,13 @@ const formatMeetingTime = (dateTime) => {
       .map(({ type, value }) => [type, value]),
   );
 
-  return `${parts.weekday}, ${parts.month} ${parts.day} · ${parts.hour}:${parts.minute} ${parts.dayPeriod} (KST)`;
+  return `${parts.weekday}, ${parts.month} ${parts.day} · ${parts.hour}:${parts.minute} ${parts.dayPeriod} (${normalizedTimeZone})`;
 };
 
-const toSuggestion = (suggestion, index) => ({
+const toSuggestion = (suggestion, index, timeZone) => ({
   ...suggestion,
   id: `${suggestion.startDateTime}-${suggestion.endDateTime}-${index}`,
-  title: formatMeetingTime(suggestion.startDateTime),
+  title: formatMeetingTime(suggestion.startDateTime, timeZone),
   description: suggestion.description ?? "",
 });
 
@@ -74,13 +67,17 @@ function MeetingSuggestion({
   onNext,
   onBack,
   onSubmit,
-  initialStartDate = getCurrentDate(),
-  initialEndDate = initialStartDate,
+  initialStartDate,
+  initialEndDate,
   initialDuration = 30,
   teamId,
+  timeZone,
 }) {
-  const [startDate, setStartDate] = useState(initialStartDate);
-  const [endDate, setEndDate] = useState(initialEndDate);
+  const resolvedInitialStartDate =
+    initialStartDate ?? getZonedDateKey(new Date(), timeZone);
+  const resolvedInitialEndDate = initialEndDate ?? resolvedInitialStartDate;
+  const [startDate, setStartDate] = useState(resolvedInitialStartDate);
+  const [endDate, setEndDate] = useState(resolvedInitialEndDate);
   const [duration, setDuration] = useState(initialDuration);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState();
   const [suggestions, setSuggestions] = useState([]);
@@ -116,12 +113,14 @@ function MeetingSuggestion({
 
       try {
         const result = await recommendMeetingTimes(teamId, {
-          startDateTime: toUtcDateTime(startDate),
-          endDateTime: toUtcDateTime(endDate, true),
+          startDateTime: toUtcDateTime(startDate, timeZone),
+          endDateTime: toUtcDateTime(endDate, timeZone, true),
           durationMinutes: duration,
         });
         const nextSuggestions = Array.isArray(result)
-          ? result.map(toSuggestion)
+          ? result.map((suggestion, index) =>
+              toSuggestion(suggestion, index, timeZone),
+            )
           : [];
 
         setSuggestions(nextSuggestions);

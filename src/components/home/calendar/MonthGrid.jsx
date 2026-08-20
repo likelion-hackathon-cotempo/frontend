@@ -3,8 +3,8 @@ import EventChip from "./EventChip.jsx";
 import WeekdayHeader from "./WeekdayHeader.jsx";
 
 function getCalendarWeeks(year, month) {
-  const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
   const cells = [];
   for (let i = 0; i < firstWeekday; i += 1) {
@@ -43,6 +43,9 @@ function getEventIdentity(event) {
 
 function isMultiDayEvent(event, segment) {
   if (segment.endColumn > segment.startColumn) return true;
+  if (event.startDateKey && event.endDateKey) {
+    return event.startDateKey !== event.endDateKey;
+  }
   if (!(event.startDate instanceof Date) || !(event.endDate instanceof Date)) {
     return false;
   }

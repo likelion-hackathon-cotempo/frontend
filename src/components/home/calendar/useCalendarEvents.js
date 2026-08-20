@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPersonalCalendar, getTeamCalendar } from "../../../api/calendar.js";
+import {
+  formatShortDateKey,
+  formatZonedTime,
+  getZonedDateKey,
+  parseDateKey,
+} from "../../../utils/dateTime.js";
 import { isEventVisibleForContext } from "./mapCalendarEvents.js";
-
-const pad = (value) => String(value).padStart(2, "0");
 
 const parseDateOnly = (value) => {
   const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? "");
   if (!matched) return null;
 
   const [, year, month, day] = matched;
-  return new Date(Number(year), Number(month) - 1, Number(day));
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
 };
 
 const parseDateTime = (value) => {
@@ -63,29 +67,47 @@ const getMemberIds = (schedule) =>
         .filter((memberId) => memberId != null)
     : [];
 
-const formatDate = (date) =>
-  `${String(date.getFullYear()).slice(-2)}. ${pad(date.getMonth() + 1)}. ${pad(date.getDate())}`;
-
-const formatTime = (date) =>
-  `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-
-const getTimeLabel = (schedule, startDate, endDate) => {
+const getTimeLabel = (schedule, startDate, endDate, timeZone) => {
   const hasStartTime = Boolean(schedule.startDateTime);
   const hasEndTime = Boolean(schedule.endDateTime);
 
-  if (!hasStartTime && schedule.dueDateTime) return formatTime(startDate);
+  if (!hasStartTime && schedule.dueDateTime) {
+    return formatZonedTime(startDate, timeZone);
+  }
   if (!hasStartTime && !hasEndTime) return "All day";
-  if (!hasEndTime) return formatTime(startDate);
+  if (!hasEndTime) return formatZonedTime(startDate, timeZone);
 
-  return `${formatTime(startDate)} - ${formatTime(endDate)}`;
+  return `${formatZonedTime(startDate, timeZone)} - ${formatZonedTime(endDate, timeZone)}`;
 };
 
-const toCalendarEvent = (schedule) => {
+const getScheduleDateKey = (schedule, date, timeZone, edge) => {
+  const dateTimeValue =
+    edge === "start"
+      ? (schedule.startDateTime ?? schedule.dueDateTime)
+      : (schedule.endDateTime ?? schedule.dueDateTime);
+  const dateOnlyValue =
+    edge === "start"
+      ? (schedule.startDate ?? schedule.endDate)
+      : (schedule.endDate ?? schedule.startDate);
+
+  if (dateTimeValue) return getZonedDateKey(date, timeZone);
+  return dateOnlyValue ?? getZonedDateKey(date, timeZone);
+};
+
+const toCalendarEvent = (schedule, timeZone) => {
   const startDate = getStartDate(schedule);
   if (!startDate) return null;
 
   const parsedEndDate = getEndDate(schedule, startDate);
   const endDate = parsedEndDate < startDate ? startDate : parsedEndDate;
+  const startDateKey = getScheduleDateKey(
+    schedule,
+    startDate,
+    timeZone,
+    "start",
+  );
+  const endDateKey = getScheduleDateKey(schedule, endDate, timeZone, "end");
+  if (!startDateKey || !endDateKey) return null;
   const category = getCategory(schedule);
   const colorByCategory = {
     personal: "blue",
@@ -109,39 +131,45 @@ const toCalendarEvent = (schedule) => {
       schedule.memberName ??
       (category === "team" ? "ALL" : (schedule.country ?? "MY")),
     teamName: schedule.teamName,
-    date: formatDate(startDate),
-    time: getTimeLabel(schedule, startDate, endDate),
+    date: formatShortDateKey(startDateKey),
+    time: getTimeLabel(schedule, startDate, endDate, timeZone),
     members: getMemberInitials(schedule, category),
     memberIds: getMemberIds(schedule),
     startDate,
     endDate,
+    startDateKey,
+    endDateKey,
   };
 };
 
 const groupEventsByDay = (events, year, month) => {
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = new Date(year, month, 0);
+  const monthStart = Date.UTC(year, month - 1, 1);
+  const monthEnd = Date.UTC(year, month, 0);
 
   return events.reduce((grouped, event) => {
-    const eventStart = new Date(
-      event.startDate.getFullYear(),
-      event.startDate.getMonth(),
-      event.startDate.getDate(),
+    const startParts = parseDateKey(event.startDateKey);
+    const endParts = parseDateKey(event.endDateKey);
+    if (!startParts || !endParts) return grouped;
+
+    const eventStart = Date.UTC(
+      startParts.year,
+      startParts.month - 1,
+      startParts.day,
     );
-    const eventEnd = new Date(
-      event.endDate.getFullYear(),
-      event.endDate.getMonth(),
-      event.endDate.getDate(),
+    const eventEnd = Date.UTC(
+      endParts.year,
+      endParts.month - 1,
+      endParts.day,
     );
-    const firstVisibleDate = eventStart < monthStart ? monthStart : eventStart;
-    const lastVisibleDate = eventEnd > monthEnd ? monthEnd : eventEnd;
+    const firstVisibleDate = Math.max(eventStart, monthStart);
+    const lastVisibleDate = Math.min(eventEnd, monthEnd);
 
     for (
-      let cursor = new Date(firstVisibleDate);
+      let cursor = firstVisibleDate;
       cursor <= lastVisibleDate;
-      cursor.setDate(cursor.getDate() + 1)
+      cursor += 86400000
     ) {
-      const day = cursor.getDate();
+      const day = new Date(cursor).getUTCDate();
       grouped[day] = [...(grouped[day] ?? []), event];
     }
 
@@ -149,7 +177,14 @@ const groupEventsByDay = (events, year, month) => {
   }, {});
 };
 
-function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
+function useCalendarEvents({
+  enabled = true,
+  context,
+  teamId,
+  year,
+  month,
+  timeZone,
+}) {
   const [schedules, setSchedules] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -201,11 +236,11 @@ function useCalendarEvents({ enabled = true, context, teamId, year, month }) {
   const events = useMemo(
     () =>
       schedules
-        .map(toCalendarEvent)
+        .map((schedule) => toCalendarEvent(schedule, timeZone))
         .filter(Boolean)
         .filter((event) => isEventVisibleForContext(context, event))
         .sort((left, right) => left.startDate - right.startDate),
-    [context, schedules],
+    [context, schedules, timeZone],
   );
 
   const eventsByDay = useMemo(

@@ -8,28 +8,28 @@ import {
   createRecommendedMilestones,
   recommendMilestones,
 } from "../../api/calendar.js";
+import {
+  getZonedDateKey,
+  normalizeTimeZone,
+  zonedDateTimeToUtcIso,
+} from "../../utils/dateTime.js";
 
-const getCurrentDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+const toDueDateTime = (date, timeZone) =>
+  zonedDateTimeToUtcIso(
+    date,
+    { hour: "11", minute: "59", second: 59 },
+    "PM",
+    timeZone,
+  );
 
-  return `${year}-${month}-${day}`;
-};
-
-const milestoneDateFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: "Asia/Seoul",
-  month: "short",
-  day: "numeric",
-});
-
-const toDueDateTime = (date) => new Date(`${date}T23:59:59`).toISOString();
-
-const toRecommendation = (recommendation, index) => ({
+const toRecommendation = (recommendation, index, timeZone) => ({
   ...recommendation,
   id: `${recommendation.title}-${recommendation.dueDateTime}-${index}`,
-  description: `${milestoneDateFormatter.format(new Date(recommendation.dueDateTime))} · ${recommendation.description ?? ""}`,
+  description: `${new Intl.DateTimeFormat("en-US", {
+    timeZone: normalizeTimeZone(timeZone),
+    month: "short",
+    day: "numeric",
+  }).format(new Date(recommendation.dueDateTime))} · ${recommendation.description ?? ""}`,
 });
 
 function MilestoneSuggestion({
@@ -40,9 +40,12 @@ function MilestoneSuggestion({
   onBack,
   onSubmit,
   teamId,
+  timeZone,
 }) {
   const [projectType, setProjectType] = useState("");
-  const [deadline, setDeadline] = useState(getCurrentDate);
+  const [deadline, setDeadline] = useState(() =>
+    getZonedDateKey(new Date(), timeZone),
+  );
   const [recommendations, setRecommendations] = useState([]);
   const [selectedRecommendationIds, setSelectedRecommendationIds] = useState([]);
   const [isRequesting, setIsRequesting] = useState(false);
@@ -54,13 +57,13 @@ function MilestoneSuggestion({
 
   const resetState = useCallback(() => {
     setProjectType("");
-    setDeadline(getCurrentDate());
+    setDeadline(getZonedDateKey(new Date(), timeZone));
     setRecommendations([]);
     setSelectedRecommendationIds([]);
     setIsRequesting(false);
     setIsCreating(false);
     setRequestError("");
-  }, []);
+  }, [timeZone]);
 
   const handleClose = useCallback(() => {
     resetState();
@@ -92,10 +95,14 @@ function MilestoneSuggestion({
       try {
         const result = await recommendMilestones(teamId, {
           projectType: projectType.trim(),
-          dueDateTime: toDueDateTime(deadline),
+          dueDateTime: toDueDateTime(deadline, timeZone),
         });
         const nextRecommendations = Array.isArray(result)
-          ? result.slice(0, 6).map(toRecommendation)
+          ? result
+              .slice(0, 6)
+              .map((recommendation, index) =>
+                toRecommendation(recommendation, index, timeZone),
+              )
           : [];
 
         setRecommendations(nextRecommendations);

@@ -25,6 +25,7 @@ function SidePanel({
   onAddMember,
   onConfirmMeetingSuggestion,
   onRecommendMilestones,
+  timeZone,
 }) {
   const members = (teamDetail?.members ?? []).map((member) => ({
     id: member.memberId,
@@ -56,6 +57,7 @@ function SidePanel({
             onEditMilestone={onEditMilestone}
             onToggleMilestone={onToggleMilestone}
             onRecommendMilestones={onRecommendMilestones}
+            timeZone={timeZone}
           />
           <MeetingSuggestionCard
             day="Thursday"

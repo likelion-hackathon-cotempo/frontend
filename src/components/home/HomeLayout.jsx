@@ -19,6 +19,7 @@ import {
   joinTeam,
 } from "../../api/teams.js";
 import { useAuth } from "../../auth/AuthContext.js";
+import { getMemberTimeZone } from "../../utils/dateTime.js";
 
 const MY_CONTEXT = { id: "me", type: "me", label: "MY" };
 
@@ -39,7 +40,8 @@ const toTeamContext = ({ teamId, name, myRole }) => {
 function HomeLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useAuth();
+  const { currentUser, setCurrentUser, setIsAuthenticated } = useAuth();
+  const timeZone = getMemberTimeZone(currentUser);
   const [initialSelection] = useState(() => ({
     isMyPage: location.pathname === "/main/mypage",
     requestedContextId: location.state?.activeId,
@@ -202,6 +204,7 @@ function HomeLayout() {
 
     try {
       await logout();
+      setCurrentUser(null);
       setIsAuthenticated(false);
       navigate("/login", { replace: true });
     } catch (error) {
@@ -396,6 +399,7 @@ function HomeLayout() {
           isOpen
           variant={selectedMilestone ? "revision" : "creation"}
           initialMilestone={selectedMilestone}
+          timeZone={timeZone}
           onClose={closeMilestoneModal}
           onSubmit={handleSubmitMilestone}
           onDelete={handleDeleteMilestone}
@@ -405,6 +409,7 @@ function HomeLayout() {
         isOpen={isMeetingSuggestionOpen}
         variant={meetingSuggestionVariant}
         teamId={activeTeamId}
+        timeZone={timeZone}
         onClose={() => {
           setIsMeetingSuggestionOpen(false);
           setMeetingSuggestionVariant("input");
@@ -420,6 +425,7 @@ function HomeLayout() {
         isOpen={isMilestoneSuggestionOpen}
         variant={milestoneSuggestionVariant}
         teamId={activeTeamId}
+        timeZone={timeZone}
         onClose={() => {
           setIsMilestoneSuggestionOpen(false);
           setMilestoneSuggestionVariant("input");

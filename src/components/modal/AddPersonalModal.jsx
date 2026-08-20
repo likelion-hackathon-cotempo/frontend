@@ -6,6 +6,11 @@ import ModalButton from "./ModalButton.jsx";
 import RadioButton from "./RadioButton.jsx";
 import Textfield from "./Textfield.jsx";
 import TimeInput from "./TimeInput.jsx";
+import {
+  getZonedDateTimeParts,
+  toDateKey,
+  zonedDateTimeToUtcIso,
+} from "../../utils/dateTime.js";
 
 const PRIORITIES = ["Low", "Medium", "High"];
 const PRIORITY_WEIGHTS = {
@@ -27,37 +32,24 @@ const convertToMinutes = ({ hour, minute }, meridiem) => {
   return normalizedHour * 60 + minuteNumber;
 };
 
-const toUtcDateTime = (date, time, meridiem) => {
-  const [year, month, day] = date.split("-").map(Number);
-  const hour = (Number(time.hour) % 12) + (meridiem === "PM" ? 12 : 0);
+const toDateInputValue = (date, timeZone) =>
+  toDateKey(getZonedDateTimeParts(date, timeZone));
 
-  return new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    Number(time.minute),
-  ).toISOString();
+const toTimeInputValue = (date, timeZone) => {
+  const { hour, minute } = getZonedDateTimeParts(date, timeZone);
+
+  return {
+    hour: String(hour % 12 || 12).padStart(2, "0"),
+    minute: String(minute).padStart(2, "0"),
+    meridiem: hour >= 12 ? "PM" : "AM",
+  };
 };
-
-const toDateInputValue = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-const toTimeInputValue = (date) => ({
-  hour: String(date.getHours() % 12 || 12).padStart(2, "0"),
-  minute: String(date.getMinutes()).padStart(2, "0"),
-  meridiem: date.getHours() >= 12 ? "PM" : "AM",
-});
 
 function AddPersonal({
   isOpen,
   variant = "creation",
   initialSchedule,
+  timeZone,
   onClose,
   onSubmit,
   onDelete,
@@ -65,14 +57,14 @@ function AddPersonal({
   const isRevision = variant === "revision";
   const initialStartDate = initialSchedule?.startDate ?? new Date();
   const initialEndDate = initialSchedule?.endDate ?? initialStartDate;
-  const initialStartTime = toTimeInputValue(initialStartDate);
-  const initialEndTime = toTimeInputValue(initialEndDate);
+  const initialStartTime = toTimeInputValue(initialStartDate, timeZone);
+  const initialEndTime = toTimeInputValue(initialEndDate, timeZone);
   const [eventName, setEventName] = useState(initialSchedule?.title ?? "");
   const [startDate, setStartDate] = useState(() =>
-    toDateInputValue(initialStartDate),
+    toDateInputValue(initialStartDate, timeZone),
   );
   const [endDate, setEndDate] = useState(() =>
-    toDateInputValue(initialEndDate),
+    toDateInputValue(initialEndDate, timeZone),
   );
   const [startMeridiem, setStartMeridiem] = useState(
     initialStartTime.meridiem,
@@ -132,8 +124,18 @@ function AddPersonal({
     try {
       await onSubmit?.({
         title: eventName.trim(),
-        startDateTime: toUtcDateTime(startDate, startTime, startMeridiem),
-        endDateTime: toUtcDateTime(endDate, endTime, endMeridiem),
+        startDateTime: zonedDateTimeToUtcIso(
+          startDate,
+          startTime,
+          startMeridiem,
+          timeZone,
+        ),
+        endDateTime: zonedDateTimeToUtcIso(
+          endDate,
+          endTime,
+          endMeridiem,
+          timeZone,
+        ),
         weight: PRIORITY_WEIGHTS[priority],
       });
 
